@@ -12,6 +12,7 @@
             --card-bg: rgba(255, 255, 255, 0.06);
             --text-color: #e0e1dd;
             --neon-glow: 0 0 15px rgba(0, 229, 255, 0.4);
+            --warning: #ff3366;
         }
 
         body {
@@ -42,7 +43,6 @@
             overflow: hidden;
         }
 
-        /* Efecto de línea futurista superior */
         .container::before {
             content: '';
             position: absolute;
@@ -110,7 +110,6 @@
             color: rgba(255, 255, 255, 0.3);
         }
 
-        /* Estilo para las opciones del select en sistemas oscuros */
         select option {
             background-color: #1b263b;
             color: #fff;
@@ -145,12 +144,7 @@
             box-shadow: 0 6px 20px rgba(0, 229, 255, 0.4), var(--neon-glow);
         }
 
-        button:active {
-            transform: translateY(1px);
-        }
-
-        /* Pantalla de éxito y carga */
-        .loading, .success-message {
+        .loading, .success-message, .error-message {
             display: none;
             text-align: center;
             padding: 20px 0;
@@ -161,6 +155,26 @@
             font-size: 1.8em;
             margin-bottom: 15px;
             text-shadow: var(--neon-glow);
+        }
+
+        .error-message h3 {
+            color: var(--warning);
+            font-size: 1.8em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 51, 102, 0.4);
+        }
+
+        .counter-badge {
+            display: inline-block;
+            background: rgba(0, 229, 255, 0.15);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1em;
+            border: 1px solid var(--primary);
+            box-shadow: var(--neon-glow);
+            margin: 10px 0 20px 0;
         }
 
         .event-card {
@@ -199,14 +213,12 @@
             color: rgba(255, 255, 255, 0.4);
             text-align: center;
             margin-top: 25px;
-            letter-spacing: 0.5px;
         }
     </style>
 </head>
 <body>
 
 <div class="container" id="formContainer">
-    <!-- Formulario Principal -->
     <div id="formBlock">
         <h2>
             TALLER DE FORTALECIMIENTO DE CAPACIDADES
@@ -221,7 +233,6 @@
 
             <div class="form-group">
                 <label for="dni">DNI (Documento de Identidad)</label>
-                <!-- pattern="[0-9]{8}" y maxlength="8" garantizan estrictamente 8 números -->
                 <input type="text" id="dni" name="dni" pattern="[0-9]{8}" maxlength="8" inputmode="numeric" title="El DNI debe tener exactamente 8 dígitos numéricos" required placeholder="12345678">
             </div>
 
@@ -246,60 +257,80 @@
 
             <button type="submit" id="submitBtn">Registrar Inscripción</button>
         </form>
-        <div class="footer-note">MINSA - Personal de Salud</div>
+        <div class="footer-note">MINSA - Vacantes limitadas (Máx. 12 personas)</div>
     </div>
 
-    <!-- Bloque de Carga (Spinner) -->
     <div id="loadingBlock" class="loading">
         <div class="spinner"></div>
-        <p>Procesando registro en la base de datos de forma segura...</p>
+        <p>Verificando disponibilidad de cupos y procesando registro...</p>
     </div>
 
-    <!-- Mensaje de Éxito Final -->
     <div id="successBlock" class="success-message">
         <h3>¡Registro Exitoso!</h3>
         <p>Tu información ha sido almacenada correctamente en el sistema.</p>
         
+        <div class="counter-badge" id="cuposAlerta">¡Quedan vacantes disponibles!</div>
+
         <div class="event-card">
-            <p style="color: #ffffff; font-weight: bold; font-size: 1.2em; text-transform: uppercase; letter-spacing: 0.5px;">📅 Recordatorio de Capacitación</p>
+            <p style="color: #ffffff; font-weight: bold; font-size: 1.2em; text-transform: uppercase;">📅 Datos de la Capacitación</p>
             <hr style="border: 0; height: 1px; background: rgba(0, 229, 255, 0.3); margin: 15px 0;">
             <p><strong>Fecha:</strong> 14 de Julio</p>
             <p><strong>Horario:</strong> 8:00 AM hasta 5:00 PM</p>
             <p style="font-size: 0.9em; color: var(--primary); margin-top: 15px;">¡Agradecemos su puntual participación en este fortalecimiento profesional!</p>
         </div>
     </div>
+
+    <div id="errorBlock" class="error-message">
+        <h3>¡Inscripciones Cerradas!</h3>
+        <p>Lo sentimos mucho. El taller ha alcanzado su límite máximo de 12 profesionales inscritos.</p>
+        <div class="event-card" style="border-color: var(--warning); background: rgba(255, 51, 102, 0.05);">
+            <p style="color: var(--warning);">🛑 Ya no quedan cupos disponibles para esta fecha.</p>
+        </div>
+    </div>
 </div>
 
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbzMYpTQAXmgo0fuJNPYnQu5IDewCmAmcDKYbhMVyX-6lcYlOuxDx3w9RHybFnFWAh-zbA/exec';
+    // URL Actualizada provista por el usuario
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbyAnbyhEqSApz_yxFHyjMiFnv02mPm_B5jtBR4Bjqt2iigJ1S57Ote-3ZU35TNYs6MWNw/exec';
+    
     const form = document.getElementById('registrationForm');
     const formBlock = document.getElementById('formBlock');
     const loadingBlock = document.getElementById('loadingBlock');
     const successBlock = document.getElementById('successBlock');
+    const errorBlock = document.getElementById('errorBlock');
+    const cuposAlerta = document.getElementById('cuposAlerta');
 
-    // Validación extra en tiempo real para el DNI (solo permite escribir números)
+    // Filtro para impedir que se escriban letras en el campo DNI
     document.getElementById('dni').addEventListener('input', function (e) {
         this.value = this.value.replace(/[^0-9]/g, '');
     });
 
     form.addEventListener('submit', e => {
-        e.preventDefault(); // Evita que la página se recargue estéticamente
+        e.preventDefault(); 
         
-        // Intercambio visual: Esconde formulario, muestra pantalla de carga
         formBlock.style.display = 'none';
         loadingBlock.style.display = 'block';
 
-        // Envío asíncrono de los datos al Google Apps Script
         fetch(scriptURL, { method: 'POST', body: new FormData(form)})
-            .then(response => {
-                // Esconde carga, muestra diseño de éxito final
+            .then(response => response.json())
+            .then(data => {
                 loadingBlock.style.display = 'none';
-                successBlock.style.display = 'block';
+                
+                if (data.result === 'success') {
+                    // Muestra cuántos cupos quedan dinámicamente
+                    cuposAlerta.innerText = `🚨 ATENCIÓN: Solo quedan ${data.cuposRestantes} cupos disponibles`;
+                    successBlock.style.display = 'block';
+                } else if (data.result === 'full') {
+                    // Bloqueo si ya se registraron 12 personas
+                    errorBlock.style.display = 'block';
+                } else {
+                    alert('Error en el registro: ' + data.error);
+                    formBlock.style.display = 'block';
+                }
             })
             .catch(error => {
                 console.error('Error!', error.message);
-                alert('Hubo un inconveniente con la red. Por favor, inténtelo de nuevo.');
-                // En caso de error devuelve la vista al formulario original
+                alert('Inconveniente de conexión de red. Por favor, inténtelo de nuevo.');
                 loadingBlock.style.display = 'none';
                 formBlock.style.display = 'block';
             });
