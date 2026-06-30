@@ -3,22 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inscripción - Taller de Fortalecimiento</title>
+    <title>Inscripción Mágica - Taller de Fortalecimiento</title>
+    <!-- Fuente amigable y redondeada ideal para temas infantiles -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #00e5ff;
-            --secondary: #008b9b;
-            --bg-gradient: linear-gradient(135deg, #0d1b2a 0%, #1b263b 50%, #0d1b2a 100%);
-            --card-bg: rgba(255, 255, 255, 0.06);
-            --text-color: #e0e1dd;
-            --neon-glow: 0 0 15px rgba(0, 229, 255, 0.4);
-            --warning: #ff3366;
+            --magic-pink: #ff70a6;
+            --magic-purple: #b5179e;
+            --magic-cyan: #4cc9f0;
+            --magic-yellow: #ffee32;
+            --text-dark: #2b2d42;
+            --card-bg: rgba(255, 255, 255, 0.9);
         }
 
         body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: var(--bg-gradient);
-            color: var(--text-color);
+            font-family: 'Quicksand', sans-serif;
+            /* Fondo infantil con colores pastel mágicos */
+            background: linear-gradient(-45deg, #ffdee9, #b5fffc, #e0c3fc, #fff9a6);
+            background-size: 400% 400%;
+            animation: cloudMovement 15s ease infinite;
             margin: 0;
             padding: 20px;
             min-height: 100vh;
@@ -26,271 +29,301 @@
             justify-content: center;
             align-items: center;
             box-sizing: border-box;
+            overflow-x: hidden;
+        }
+
+        /* Animación del fondo mágico de nubes */
+        @keyframes cloudMovement {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         .container {
             width: 100%;
-            max-width: 600px;
+            max-width: 580px;
             background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            padding: 40px 30px;
-            border-radius: 20px;
-            border: 1px solid rgba(0, 229, 255, 0.2);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), var(--neon-glow);
-            transition: all 0.5s ease-in-out;
+            border-radius: 30px;
+            padding: 35px 25px;
+            box-shadow: 0 20px 40px rgba(181, 23, 158, 0.15);
+            border: 4px solid #ffffff;
             position: relative;
-            overflow: hidden;
+            transition: all 0.4s ease;
         }
 
+        /* Chispas y estrellas mágicas decorativas */
         .container::before {
-            content: '';
+            content: '✨';
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, transparent, var(--primary), transparent);
-            animation: pulseGlow 3s infinite;
+            top: -20px;
+            left: -10px;
+            font-size: 2rem;
+            animation: magicFloat 3s ease-in-out infinite;
         }
 
-        @keyframes pulseGlow {
-            0% { opacity: 0.5; }
-            50% { opacity: 1; }
-            100% { opacity: 0.5; }
+        .container::after {
+            content: '⭐';
+            position: absolute;
+            bottom: -15px;
+            right: -10px;
+            font-size: 2rem;
+            animation: magicFloat 3.5s ease-in-out infinite reverse;
+        }
+
+        @keyframes magicFloat {
+            0% { transform: translateY(0) scale(1); filter: drop-shadow(0 0 5px var(--magic-yellow)); }
+            50% { transform: translateY(-10px) scale(1.2); filter: drop-shadow(0 0 15px var(--magic-pink)); }
+            100% { transform: translateY(0) scale(1); filter: drop-shadow(0 0 5px var(--magic-yellow)); }
         }
 
         h2 {
-            color: #ffffff;
-            font-size: 1.5em;
+            font-family: 'Fredoka One', cursive;
+            color: var(--magic-purple);
+            font-size: 1.45em;
             text-align: center;
             line-height: 1.4;
-            margin-bottom: 30px;
-            font-weight: 600;
-            text-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
-            letter-spacing: 0.5px;
+            margin-bottom: 25px;
+            text-shadow: 2px 2px 0px #ffffff, 4px 4px 0px rgba(0,0,0,0.05);
         }
 
         h2 small {
             display: block;
-            font-size: 0.7em;
-            color: var(--primary);
-            margin-top: 10px;
-            font-weight: 400;
-            text-transform: uppercase;
+            font-family: 'Quicksand', sans-serif;
+            font-size: 0.75em;
+            color: var(--magic-pink);
+            margin-top: 8px;
+            font-weight: 700;
         }
 
         .form-group {
-            margin-bottom: 25px;
-            position: relative;
+            margin-bottom: 20px;
         }
 
         label {
             display: block;
-            margin-bottom: 9px;
-            font-size: 0.9em;
-            font-weight: 600;
-            color: var(--primary);
-            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            font-weight: 700;
+            color: var(--text-dark);
+            font-size: 0.95em;
+            padding-left: 5px;
         }
 
         input[type="text"], select {
             width: 100%;
-            padding: 12px 16px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(0, 229, 255, 0.3);
-            border-radius: 8px;
+            padding: 14px 18px;
+            background: #ffffff;
+            border: 3px solid #e2e8f0;
+            border-radius: 18px;
             box-sizing: border-box;
-            font-size: 1em;
-            color: #fff;
+            font-size: 1.05em;
+            color: var(--text-dark);
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 700;
             transition: all 0.3s ease;
         }
 
         input[type="text"]::placeholder {
-            color: rgba(255, 255, 255, 0.3);
-        }
-
-        select option {
-            background-color: #1b263b;
-            color: #fff;
+            color: #cbd5e1;
         }
 
         input[type="text"]:focus, select:focus {
-            border-color: var(--primary);
-            box-shadow: var(--neon-glow);
+            border-color: var(--magic-cyan);
+            box-shadow: 0 0 0 4px rgba(76, 201, 240, 0.2);
             outline: none;
-            background: rgba(255, 255, 255, 0.08);
         }
 
+        /* Botón estilo Varita Mágica */
         button {
             width: 100%;
-            background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
-            color: #0d1b2a;
-            padding: 14px;
+            background: linear-gradient(135deg, var(--magic-pink) 0%, var(--magic-purple) 100%);
+            color: white;
+            padding: 16px;
             border: none;
-            border-radius: 8px;
-            font-size: 1.1em;
+            border-radius: 20px;
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.2em;
             cursor: pointer;
-            font-weight: 700;
-            text-transform: uppercase;
             letter-spacing: 1px;
-            transition: transform 0.2s, box-shadow 0.3s;
-            box-shadow: 0 4px 15px rgba(0, 229, 255, 0.2);
-            margin-top: 10px;
+            box-shadow: 0 8px 20px rgba(181, 23, 158, 0.3);
+            transition: all 0.3s ease;
+            margin-top: 15px;
         }
 
         button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 229, 255, 0.4), var(--neon-glow);
+            transform: scale(1.03);
+            box-shadow: 0 12px 25px rgba(255, 112, 166, 0.4);
+            filter: brightness(1.05);
         }
 
+        button:active {
+            transform: scale(0.98);
+        }
+
+        /* Barra de cupos dinámicos inferior */
+        .bottom-counter-box {
+            background: linear-gradient(135deg, #e0f2fe 0%, #ffedd5 100%);
+            border: 2px dashed var(--magic-pink);
+            border-radius: 15px;
+            padding: 12px;
+            margin-top: 25px;
+            text-align: center;
+            font-weight: 700;
+            color: var(--magic-purple);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+            animation: pulseCounter 2s infinite;
+        }
+
+        @keyframes pulseCounter {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        /* Vistas de carga y éxito */
         .loading, .success-message, .error-message {
             display: none;
             text-align: center;
-            padding: 20px 0;
+            padding: 20px 5px;
         }
 
         .success-message h3 {
-            color: var(--primary);
-            font-size: 1.8em;
+            font-family: 'Fredoka One', cursive;
+            color: #2a9d8f;
+            font-size: 2em;
             margin-bottom: 15px;
-            text-shadow: var(--neon-glow);
         }
 
         .error-message h3 {
-            color: var(--warning);
-            font-size: 1.8em;
+            font-family: 'Fredoka One', cursive;
+            color: var(--magic-pink);
+            font-size: 2em;
             margin-bottom: 15px;
-            text-shadow: 0 0 10px rgba(255, 51, 102, 0.4);
         }
 
-        .counter-badge {
-            display: inline-block;
-            background: rgba(0, 229, 255, 0.15);
-            color: #fff;
-            padding: 8px 16px;
+        .magic-card {
+            background: #ffffff;
+            border: 3px solid var(--magic-cyan);
             border-radius: 20px;
-            font-weight: bold;
-            font-size: 1em;
-            border: 1px solid var(--primary);
-            box-shadow: var(--neon-glow);
-            margin: 10px 0 20px 0;
+            padding: 25px 20px;
+            margin-top: 20px;
+            box-shadow: 0 10px 25px rgba(76, 201, 240, 0.15);
         }
 
-        .event-card {
-            background: rgba(0, 229, 255, 0.08);
-            border: 1px dashed var(--primary);
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 25px;
-            box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.1);
+        .magic-card p {
+            margin: 12px 0;
+            font-size: 1.15em;
+            color: var(--text-dark);
         }
 
-        .event-card p {
-            margin: 10px 0;
-            font-size: 1.1em;
-            line-height: 1.5;
+        /* Chispas animadas de carga */
+        .magic-spinner {
+            font-size: 3rem;
+            animation: spinMagic 1.5s linear infinite;
+            display: inline-block;
+            margin-bottom: 15px;
         }
 
-        .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.1);
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            border-left-color: var(--primary);
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px auto;
-            box-shadow: var(--neon-glow);
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        @keyframes spinMagic {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.3); }
+            100% { transform: rotate(360deg) scale(1); }
         }
 
         .footer-note {
-            font-size: 0.8em;
-            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.85em;
+            color: #94a3b8;
             text-align: center;
-            margin-top: 25px;
+            margin-top: 20px;
+            font-weight: 700;
         }
     </style>
 </head>
 <body>
 
 <div class="container" id="formContainer">
+    <!-- Formulario Principal -->
     <div id="formBlock">
         <h2>
-            TALLER DE FORTALECIMIENTO DE CAPACIDADES
+            ✨ TALLER DE FORTALECIMIENTO DE CAPACIDADES ✨
             <small>Determinación de Hemoglobina y Control de Calidad Antropométrico (R.M.976-2014)</small>
         </h2>
         
         <form id="registrationForm">
             <div class="form-group">
-                <label for="nombre">Nombres y Apellidos</label>
-                <input type="text" id="nombre" name="nombre" required placeholder="Ej. Lic. María Pérez">
+                <label for="nombre">🎈 Nombres y Apellidos:</label>
+                <input type="text" id="nombre" name="nombre" required placeholder="Escribe aquí tu nombre completo">
             </div>
 
             <div class="form-group">
-                <label for="dni">DNI (Documento de Identidad)</label>
-                <input type="text" id="dni" name="dni" pattern="[0-9]{8}" maxlength="8" inputmode="numeric" title="El DNI debe tener exactamente 8 dígitos numéricos" required placeholder="12345678">
+                <label for="dni">🪪 Número de DNI:</label>
+                <input type="text" id="dni" name="dni" pattern="[0-9]{8}" maxlength="8" inputmode="numeric" title="El DNI debe tener 8 números" required placeholder="Ej. 12345678">
             </div>
 
             <div class="form-group">
-                <label for="profesion">Profesión</label>
+                <label for="profesion">🩺 Profesión / Especialidad:</label>
                 <select id="profesion" name="profesion" required>
-                    <option value="" disabled selected>Seleccione su profesión</option>
+                    <option value="" disabled selected>Elige tu profesión</option>
                     <option value="LIC. ENFERMERÍA">LIC. ENFERMERÍA</option>
                     <option value="LIC. NUTRICION">LIC. NUTRICION</option>
                 </select>
             </div>
 
             <div class="form-group">
-                <label for="condicion">Condición Laboral</label>
+                <label for="condicion">💼 Condición Laboral:</label>
                 <select id="condicion" name="condicion" required>
-                    <option value="" disabled selected>Seleccione su condición</option>
+                    <option value="" disabled selected>Elige tu condición</option>
                     <option value="CAS">CAS</option>
                     <option value="276">276</option>
                     <option value="SERUM">SERUM</option>
                 </select>
             </div>
 
-            <button type="submit" id="submitBtn">Registrar Inscripción</button>
+            <button type="submit" id="submitBtn">🪄 ¡Inscribirme Ahora!</button>
         </form>
-        <div class="footer-note">MINSA - Vacantes limitadas (Máx. 12 personas)</div>
-    </div>
 
-    <div id="loadingBlock" class="loading">
-        <div class="spinner"></div>
-        <p>Verificando disponibilidad de cupos y procesando registro...</p>
-    </div>
-
-    <div id="successBlock" class="success-message">
-        <h3>¡Registro Exitoso!</h3>
-        <p>Tu información ha sido almacenada correctamente en el sistema.</p>
-        
-        <div class="counter-badge" id="cuposAlerta">¡Quedan vacantes disponibles!</div>
-
-        <div class="event-card">
-            <p style="color: #ffffff; font-weight: bold; font-size: 1.2em; text-transform: uppercase;">📅 Datos de la Capacitación</p>
-            <hr style="border: 0; height: 1px; background: rgba(0, 229, 255, 0.3); margin: 15px 0;">
-            <p><strong>Fecha:</strong> 14 de Julio</p>
-            <p><strong>Horario:</strong> 8:00 AM hasta 5:00 PM</p>
-            <p style="font-size: 0.9em; color: var(--primary); margin-top: 15px;">¡Agradecemos su puntual participación en este fortalecimiento profesional!</p>
+        <!-- INDICADOR DE CUPOS EN LA PARTE INFERIOR DEL MOMENTO -->
+        <div class="bottom-counter-box" id="liveCounterBottom">
+            🌟 Cupos Máximos: 12 Vacantes Disponibles 🌟
         </div>
+        
+        <div class="footer-note">DIT - Desarrollo Infantil Temprano</div>
     </div>
 
+    <!-- Bloque de Carga Mágica -->
+    <div id="loadingBlock" class="loading">
+        <div class="magic-spinner">🔮</div>
+        <p style="font-size: 1.2em; font-weight: 700; color: var(--magic-purple);">Guardando tus datos con magia... ¡Espera un poquito!</p>
+    </div>
+
+    <!-- Mensaje de Éxito Final -->
+    <div id="successBlock" class="success-message">
+        <h3>🎉 ¡Inscripción Mágica Exitosa! 🎉</h3>
+        <p style="font-weight: 700; color: #4a5568;">¡Felicidades! Tus datos ya están guardados en nuestra nube.</p>
+        
+        <div class="magic-card">
+            <p style="color: var(--magic-purple); font-weight: bold; font-size: 1.3em;">📅 ¡Guarda la Fecha!</p>
+            <hr style="border: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--magic-pink), transparent); margin: 15px 0;">
+            <p><strong>Día del Taller:</strong> 14 de Julio</p>
+            <p><strong>Horario Especial:</strong> Desde las 8:00 AM hasta las 5:00 PM</p>
+            <p style="font-size: 0.95em; color: var(--magic-pink); font-weight: 700; margin-top: 15px;">🌟 ¡Te esperamos con mucha energía para aprender juntos! 🌟</p>
+        </div>
+
+        <!-- Mensaje dinámico inferior que se actualiza al terminar -->
+        <div class="bottom-counter-box" id="successCounterBottom" style="margin-top:20px;"></div>
+    </div>
+
+    <!-- Mensaje de Sala Llena -->
     <div id="errorBlock" class="error-message">
-        <h3>¡Inscripciones Cerradas!</h3>
-        <p>Lo sentimos mucho. El taller ha alcanzado su límite máximo de 12 profesionales inscritos.</p>
-        <div class="event-card" style="border-color: var(--warning); background: rgba(255, 51, 102, 0.05);">
-            <p style="color: var(--warning);">🛑 Ya no quedan cupos disponibles para esta fecha.</p>
+        <h3>🛑 ¡Oh no, Cupos Llenos! 🛑</h3>
+        <p style="font-weight: 700;">El límite mágico de 12 profesionales ya se ha completado por completo.</p>
+        <div class="magic-card" style="border-color: var(--magic-pink);">
+            <p style="color: var(--magic-pink); font-weight: 700;">Lo sentimos, ya no quedan más vacantes disponibles para este taller.</p>
         </div>
     </div>
 </div>
 
 <script>
-    // URL Actualizada provista por el usuario
+    // URL provista por el usuario
     const scriptURL = 'https://script.google.com/macros/s/AKfycbyAnbyhEqSApz_yxFHyjMiFnv02mPm_B5jtBR4Bjqt2iigJ1S57Ote-3ZU35TNYs6MWNw/exec';
     
     const form = document.getElementById('registrationForm');
@@ -298,9 +331,10 @@
     const loadingBlock = document.getElementById('loadingBlock');
     const successBlock = document.getElementById('successBlock');
     const errorBlock = document.getElementById('errorBlock');
-    const cuposAlerta = document.getElementById('cuposAlerta');
+    const liveCounterBottom = document.getElementById('liveCounterBottom');
+    const successCounterBottom = document.getElementById('successCounterBottom');
 
-    // Filtro para impedir que se escriban letras en el campo DNI
+    // Filtro para impedir que escriban letras en el DNI
     document.getElementById('dni').addEventListener('input', function (e) {
         this.value = this.value.replace(/[^0-9]/g, '');
     });
@@ -317,20 +351,20 @@
                 loadingBlock.style.display = 'none';
                 
                 if (data.result === 'success') {
-                    // Muestra cuántos cupos quedan dinámicamente
-                    cuposAlerta.innerText = `🚨 ATENCIÓN: Solo quedan ${data.cuposRestantes} cupos disponibles`;
+                    // Actualiza el cartel inferior con la magia de los cupos que van quedando
+                    const msg = `✨ ¡Inscripción registrada! Aún quedan ${data.cuposRestantes} cupos disponibles ✨`;
+                    successCounterBottom.innerText = msg;
                     successBlock.style.display = 'block';
                 } else if (data.result === 'full') {
-                    // Bloqueo si ya se registraron 12 personas
                     errorBlock.style.display = 'block';
                 } else {
-                    alert('Error en el registro: ' + data.error);
+                    alert('Error: ' + data.error);
                     formBlock.style.display = 'block';
                 }
             })
             .catch(error => {
                 console.error('Error!', error.message);
-                alert('Inconveniente de conexión de red. Por favor, inténtelo de nuevo.');
+                alert('¡Ups! Hubo un problema de señal mágica. Inténtalo otra vez.');
                 loadingBlock.style.display = 'none';
                 formBlock.style.display = 'block';
             });
