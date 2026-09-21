@@ -1,375 +1,450 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inscripción Mágica - Taller de Fortalecimiento</title>
-    <!-- Fuente amigable y redondeada ideal para temas infantiles -->
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --magic-pink: #ff70a6;
-            --magic-purple: #b5179e;
-            --magic-cyan: #4cc9f0;
-            --magic-yellow: #ffee32;
-            --text-dark: #2b2d42;
-            --card-bg: rgba(255, 255, 255, 0.9);
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Censo DIT</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+  <style>
+    :root { 
+      --primary-color: #00796b; 
+      --secondary-color: #004d40; 
+      --modal-header-color: #3f51b5; /* Azul similar a la imagen */
+    }
+    body { background-color: #f0f4f4; color: #333; }
+    .header-panel { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; padding: 25px; border-radius: 8px 8px 0 0; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    .container { margin-top: 2%; max-width: 900px; }
+    .card { border-radius: 12px; overflow: hidden; }
+    .btn-save { background-color: var(--primary-color) !important; width: 100%; height: 50px; font-weight: bold; font-size: 1.1rem; }
+    #loader { display: none; }
+    .section-title { font-size: 0.9rem; font-weight: bold; color: var(--primary-color); text-transform: uppercase; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px; }
+    input.validate.invalid { border-bottom: 1px solid #ff5252 !important; box-shadow: 0 1px 0 0 #ff5252 !important; }
 
-        body {
-            font-family: 'Quicksand', sans-serif;
-            /* Fondo infantil con colores pastel mágicos */
-            background: linear-gradient(-45deg, #ffdee9, #b5fffc, #e0c3fc, #fff9a6);
-            background-size: 400% 400%;
-            animation: cloudMovement 15s ease infinite;
-            margin: 0;
-            padding: 20px;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-sizing: border-box;
-            overflow-x: hidden;
-        }
-
-        /* Animación del fondo mágico de nubes */
-        @keyframes cloudMovement {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        .container {
-            width: 100%;
-            max-width: 580px;
-            background: var(--card-bg);
-            border-radius: 30px;
-            padding: 35px 25px;
-            box-shadow: 0 20px 40px rgba(181, 23, 158, 0.15);
-            border: 4px solid #ffffff;
-            position: relative;
-            transition: all 0.4s ease;
-        }
-
-        /* Chispas y estrellas mágicas decorativas */
-        .container::before {
-            content: '✨';
-            position: absolute;
-            top: -20px;
-            left: -10px;
-            font-size: 2rem;
-            animation: magicFloat 3s ease-in-out infinite;
-        }
-
-        .container::after {
-            content: '⭐';
-            position: absolute;
-            bottom: -15px;
-            right: -10px;
-            font-size: 2rem;
-            animation: magicFloat 3.5s ease-in-out infinite reverse;
-        }
-
-        @keyframes magicFloat {
-            0% { transform: translateY(0) scale(1); filter: drop-shadow(0 0 5px var(--magic-yellow)); }
-            50% { transform: translateY(-10px) scale(1.2); filter: drop-shadow(0 0 15px var(--magic-pink)); }
-            100% { transform: translateY(0) scale(1); filter: drop-shadow(0 0 5px var(--magic-yellow)); }
-        }
-
-        h2 {
-            font-family: 'Fredoka One', cursive;
-            color: var(--magic-purple);
-            font-size: 1.45em;
-            text-align: center;
-            line-height: 1.4;
-            margin-bottom: 25px;
-            text-shadow: 2px 2px 0px #ffffff, 4px 4px 0px rgba(0,0,0,0.05);
-        }
-
-        h2 small {
-            display: block;
-            font-family: 'Quicksand', sans-serif;
-            font-size: 0.75em;
-            color: var(--magic-pink);
-            margin-top: 8px;
-            font-weight: 700;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 700;
-            color: var(--text-dark);
-            font-size: 0.95em;
-            padding-left: 5px;
-        }
-
-        input[type="text"], select {
-            width: 100%;
-            padding: 14px 18px;
-            background: #ffffff;
-            border: 3px solid #e2e8f0;
-            border-radius: 18px;
-            box-sizing: border-box;
-            font-size: 1.05em;
-            color: var(--text-dark);
-            font-family: 'Quicksand', sans-serif;
-            font-weight: 700;
-            transition: all 0.3s ease;
-        }
-
-        input[type="text"]::placeholder {
-            color: #cbd5e1;
-        }
-
-        input[type="text"]:focus, select:focus {
-            border-color: var(--magic-cyan);
-            box-shadow: 0 0 0 4px rgba(76, 201, 240, 0.2);
-            outline: none;
-        }
-
-        /* Botón estilo Varita Mágica */
-        button {
-            width: 100%;
-            background: linear-gradient(135deg, var(--magic-pink) 0%, var(--magic-purple) 100%);
-            color: white;
-            padding: 16px;
-            border: none;
-            border-radius: 20px;
-            font-family: 'Fredoka One', cursive;
-            font-size: 1.2em;
-            cursor: pointer;
-            letter-spacing: 1px;
-            box-shadow: 0 8px 20px rgba(181, 23, 158, 0.3);
-            transition: all 0.3s ease;
-            margin-top: 15px;
-        }
-
-        button:hover {
-            transform: scale(1.03);
-            box-shadow: 0 12px 25px rgba(255, 112, 166, 0.4);
-            filter: brightness(1.05);
-        }
-
-        button:active {
-            transform: scale(0.98);
-        }
-
-        /* Barra de cupos dinámicos inferior */
-        .bottom-counter-box {
-            background: linear-gradient(135deg, #e0f2fe 0%, #ffedd5 100%);
-            border: 2px dashed var(--magic-pink);
-            border-radius: 15px;
-            padding: 12px;
-            margin-top: 25px;
-            text-align: center;
-            font-weight: 700;
-            color: var(--magic-purple);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
-            animation: pulseCounter 2s infinite;
-        }
-
-        @keyframes pulseCounter {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-
-        /* Vistas de carga y éxito */
-        .loading, .success-message, .error-message {
-            display: none;
-            text-align: center;
-            padding: 20px 5px;
-        }
-
-        .success-message h3 {
-            font-family: 'Fredoka One', cursive;
-            color: #2a9d8f;
-            font-size: 2em;
-            margin-bottom: 15px;
-        }
-
-        .error-message h3 {
-            font-family: 'Fredoka One', cursive;
-            color: var(--magic-pink);
-            font-size: 2em;
-            margin-bottom: 15px;
-        }
-
-        .magic-card {
-            background: #ffffff;
-            border: 3px solid var(--magic-cyan);
-            border-radius: 20px;
-            padding: 25px 20px;
-            margin-top: 20px;
-            box-shadow: 0 10px 25px rgba(76, 201, 240, 0.15);
-        }
-
-        .magic-card p {
-            margin: 12px 0;
-            font-size: 1.15em;
-            color: var(--text-dark);
-        }
-
-        /* Chispas animadas de carga */
-        .magic-spinner {
-            font-size: 3rem;
-            animation: spinMagic 1.5s linear infinite;
-            display: inline-block;
-            margin-bottom: 15px;
-        }
-
-        @keyframes spinMagic {
-            0% { transform: rotate(0deg) scale(1); }
-            50% { transform: rotate(180deg) scale(1.3); }
-            100% { transform: rotate(360deg) scale(1); }
-        }
-
-        .footer-note {
-            font-size: 0.85em;
-            color: #94a3b8;
-            text-align: center;
-            margin-top: 20px;
-            font-weight: 700;
-        }
-    </style>
+    /* ESTILOS DEL MODAL DE SECTOR */
+    #modalSector {
+      border-radius: 12px;
+      max-height: 85%;
+      width: 90%;
+      max-width: 550px;
+    }
+    .modal-header-custom {
+      background-color: var(--modal-header-color);
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+    .modal-header-custom .modal-close {
+      color: white;
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+    .search-box-container {
+      padding: 15px 20px 5px 20px;
+    }
+    .search-input-field {
+      border: 2px solid #3f51b5 !important;
+      border-radius: 20px !important;
+      padding: 0 15px !important;
+      box-sizing: border-box !important;
+      height: 42px !important;
+      font-size: 0.95rem !important;
+      text-transform: uppercase;
+    }
+    .search-input-field:focus {
+      box-shadow: 0 0 5px rgba(63, 81, 181, 0.5) !important;
+    }
+    .sector-list {
+      max-height: 350px;
+      overflow-y: auto;
+      margin: 0;
+      padding: 0 10px;
+    }
+    .sector-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 15px;
+      border-bottom: 1px solid #e0e0e0;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #333;
+      transition: background 0.2s;
+    }
+    .sector-item:hover {
+      background-color: #f1f3f9;
+    }
+    .sector-item i {
+      color: #3f51b5;
+      font-size: 1.1rem;
+    }
+    .modal-footer-custom {
+      padding: 10px 20px;
+      background-color: #f5f5f5;
+      text-align: right;
+    }
+  </style>
 </head>
 <body>
 
-<div class="container" id="formContainer">
-    <!-- Formulario Principal -->
-    <div id="formBlock">
-        <h2>
-            ✨ TALLER DE FORTALECIMIENTO DE CAPACIDADES ✨
-            <small>Determinación de Hemoglobina y Control de Calidad Antropométrico (R.M.976-2014)</small>
-        </h2>
-        
-        <form id="registrationForm">
-            <div class="form-group">
-                <label for="nombre">🎈 Nombres y Apellidos:</label>
-                <input type="text" id="nombre" name="nombre" required placeholder="Escribe aquí tu nombre completo">
-            </div>
-
-            <div class="form-group">
-                <label for="dni">🪪 Número de DNI:</label>
-                <input type="text" id="dni" name="dni" pattern="[0-9]{8}" maxlength="8" inputmode="numeric" title="El DNI debe tener 8 números" required placeholder="Ej. 12345678">
-            </div>
-
-            <div class="form-group">
-                <label for="profesion">🩺 Profesión / Especialidad:</label>
-                <select id="profesion" name="profesion" required>
-                    <option value="" disabled selected>Elige tu profesión</option>
-                    <option value="LIC. ENFERMERÍA">LIC. ENFERMERÍA</option>
-                    <option value="LIC. NUTRICION">LIC. NUTRICION</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="condicion">💼 Condición Laboral:</label>
-                <select id="condicion" name="condicion" required>
-                    <option value="" disabled selected>Elige tu condición</option>
-                    <option value="CAS">CAS</option>
-                    <option value="276">276</option>
-                    <option value="SERUM">SERUM</option>
-                </select>
-            </div>
-
-            <button type="submit" id="submitBtn">🪄 ¡Inscribirme Ahora!</button>
-        </form>
-
-        <!-- INDICADOR DE CUPOS EN LA PARTE INFERIOR DEL MOMENTO -->
-        <div class="bottom-counter-box" id="liveCounterBottom">
-            🌟 Cupos Máximos: 12 Vacantes Disponibles 🌟
-        </div>
-        
-        <div class="footer-note">DIT - Desarrollo Infantil Temprano</div>
+<div class="container">
+  <div class="card z-depth-3">
+    <div class="header-panel center-align">
+      <h4 style="margin:0;"><i class="material-icons medium">assignment_ind</i> CENSO DIT</h4>
+      <p style="margin: 5px 0 0;">Bienvenido</p>
     </div>
-
-    <!-- Bloque de Carga Mágica -->
-    <div id="loadingBlock" class="loading">
-        <div class="magic-spinner">🔮</div>
-        <p style="font-size: 1.2em; font-weight: 700; color: var(--magic-purple);">Guardando tus datos con magia... ¡Espera un poquito!</p>
-    </div>
-
-    <!-- Mensaje de Éxito Final -->
-    <div id="successBlock" class="success-message">
-        <h3>🎉 ¡Inscripción Mágica Exitosa! 🎉</h3>
-        <p style="font-weight: 700; color: #4a5568;">¡Felicidades! Tus datos ya están guardados en nuestra nube.</p>
-        
-        <div class="magic-card">
-            <p style="color: var(--magic-purple); font-weight: bold; font-size: 1.3em;">📅 ¡Guarda la Fecha!</p>
-            <hr style="border: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--magic-pink), transparent); margin: 15px 0;">
-            <p><strong>Día del Taller:</strong> 14 de Julio</p>
-            <p><strong>Horario Especial:</strong> Desde las 8:00 AM hasta las 5:00 PM</p>
-            <p style="font-size: 0.95em; color: var(--magic-pink); font-weight: 700; margin-top: 15px;">🌟 ¡Te esperamos con mucha energía para aprender juntos! 🌟</p>
+    
+    <div class="card-content">
+      <form id="pacienteForm">
+        <div class="row">
+          <div class="input-field col s12 m8">
+            <i class="material-icons prefix">fingerprint</i>
+            <input id="dni" type="text" class="validate" required pattern="[0-9]{8}" maxlength="8">
+            <label for="dni">DNI (Obligatorio - 8 dígitos)</label>
+          </div>
+          <div class="col s12 m4">
+            <button type="button" class="btn waves-effect blue darken-3" onclick="buscarDNI()" style="width:100%; margin-top:15px;">
+              <i class="material-icons left">search</i> Verificar
+            </button>
+          </div>
         </div>
 
-        <!-- Mensaje dinámico inferior que se actualiza al terminar -->
-        <div class="bottom-counter-box" id="successCounterBottom" style="margin-top:20px;"></div>
-    </div>
-
-    <!-- Mensaje de Sala Llena -->
-    <div id="errorBlock" class="error-message">
-        <h3>🛑 ¡Oh no, Cupos Llenos! 🛑</h3>
-        <p style="font-weight: 700;">El límite mágico de 12 profesionales ya se ha completado por completo.</p>
-        <div class="magic-card" style="border-color: var(--magic-pink);">
-            <p style="color: var(--magic-pink); font-weight: 700;">Lo sentimos, ya no quedan más vacantes disponibles para este taller.</p>
+        <div class="section-title">Datos Personales</div>
+        <div class="row">
+          <div class="input-field col s12">
+            <i class="material-icons prefix">person</i>
+            <input id="nombreB" type="text" class="validate" required style="text-transform: uppercase;">
+            <label for="nombreB">Apellidos y Nombres Completos (Obligatorio)</label>
+          </div>
         </div>
+
+        <div class="row">
+          <div class="input-field col s12 m4">
+            <i class="material-icons prefix">event</i>
+            <input id="fn" type="text" placeholder="DD/MM/YYYY" maxlength="10" required class="validate">
+            <label for="fn" class="active">Fecha de Nacimiento (Obligatorio)</label>
+          </div>
+          <div class="input-field col s12 m4">
+            <select id="sexo" required>
+              <option value="" disabled selected>Sexo</option>
+              <option value="M">Masculino</option>
+              <option value="F">Femenino</option>
+            </select>
+            <label>Sexo (Obligatorio)</label>
+          </div>
+          <div class="input-field col s12 m4">
+            <select id="estado_civil">
+              <option value="" disabled selected>Estado Civil</option>
+              <option value="SOLTERO">Soltero/a</option>
+              <option value="CONVIVIENTE">Conviviente</option>
+              <option value="CASADO">Casado/a</option>
+              <option value="VIUDO">Viudo/a</option>
+              <option value="DIVORCIADO">Divorciado/a</option>
+            </select>
+            <label>Estado Civil (Opcional)</label>
+          </div>
+        </div>
+
+        <div class="section-title">Ubicación y Contacto</div>
+        <div class="row">
+          <div class="input-field col s12 m8">
+            <i class="material-icons prefix">map</i>
+            <!-- CAMPO DE SECTOR MEJORADO CON INTERFAZ TIPO MODAL -->
+            <input id="sector" type="text" placeholder="Haga clic para seleccionar..." required class="validate" readonly onclick="abrirModalSector()">
+            <label for="sector" class="active">Sector (Obligatorio)</label>
+          </div>
+          <div class="input-field col s12 m4">
+            <input id="mz" type="text">
+            <label for="mz">Manzana (Opcional)</label>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="input-field col s12 m4">
+            <i class="material-icons prefix">phone</i>
+            <input id="telefono" type="text" maxlength="19" required class="validate">
+            <label for="telefono">Celular (Ej: 987654321 / 912345678)</label>
+          </div>
+          <div class="input-field col s12 m8">
+            <i class="material-icons prefix">place</i>
+            <input id="ref_direccion" type="text" required class="validate">
+            <label for="ref_direccion">Referencia de Dirección (Obligatorio)</label>
+          </div>
+        </div>
+
+        <div class="section-title">Historial</div>
+        <div class="row">
+          <div class="input-field col s12 m6">
+            <i class="material-icons prefix">folder</i>
+            <input id="hclinica" type="text" required class="validate">
+            <label for="hclinica">Historia Clínica (Obligatorio)</label>
+          </div>
+          <div class="input-field col s12 m6">
+            <i class="material-icons prefix">description</i>
+            <input id="ffamiliar" type="text" maxlength="7" class="validate">
+            <label for="ffamiliar">Ficha Familiar (Máx 7 números - Opcional)</label>
+          </div>
+        </div>
+
+        <input type="hidden" id="rowNum" value="">
+
+        <div class="center-align">
+          <button id="btnSubmit" class="btn waves-effect btn-save" type="submit">
+            <i class="material-icons right">cloud_upload</i> Guardar
+          </button>
+        </div>
+
+        <div id="loader" class="center-align" style="margin-top:20px;">
+          <div class="preloader-wrapper small active">
+            <div class="spinner-layer spinner-green-only">
+              <div class="circle-clipper left"><div class="circle"></div></div>
+              <div class="gap-patch"><div class="circle"></div></div>
+              <div class="circle-clipper right"><div class="circle"></div></div>
+            </div>
+          </div>
+          <p>Procesando información...</p>
+        </div>
+      </form>
     </div>
+  </div>
 </div>
 
+<!-- MODAL PARA SELECCIÓN DE SECTOR -->
+<div id="modalSector" class="modal">
+  <div class="modal-header-custom">
+    <span><i class="material-icons left" style="font-size:1.2rem; vertical-align:middle;">location_on</i> Seleccionar Sector Registrado</span>
+    <i class="material-icons modal-close">close</i>
+  </div>
+  <div class="search-box-container">
+    <input type="text" id="inputBuscarSector" class="search-input-field" placeholder="ESCRIBA PARA BUSCAR SECTOR..." onkeyup="filtrarSectores()">
+  </div>
+  <div class="sector-list" id="listaSectoresContenedor">
+    <!-- Lista generada dinámicamente mediante JS -->
+  </div>
+  <div class="modal-footer-custom">
+    <a href="#!" class="modal-close btn-flat grey lighten-2 waves-effect" style="border-radius: 8px;">Cancelar</a>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 <script>
-    // URL provista por el usuario
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbyAnbyhEqSApz_yxFHyjMiFnv02mPm_B5jtBR4Bjqt2iigJ1S57Ote-3ZU35TNYs6MWNw/exec';
-    
-    const form = document.getElementById('registrationForm');
-    const formBlock = document.getElementById('formBlock');
-    const loadingBlock = document.getElementById('loadingBlock');
-    const successBlock = document.getElementById('successBlock');
-    const errorBlock = document.getElementById('errorBlock');
-    const liveCounterBottom = document.getElementById('liveCounterBottom');
-    const successCounterBottom = document.getElementById('successCounterBottom');
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwkYPuO13juZBjhs7wrxX0MEYy-hPeg0HyzjDJ9_Oy-Yq3Fih99wFAyI5xlbJ_u4rBX1g/exec";
 
-    // Filtro para impedir que escriban letras en el DNI
-    document.getElementById('dni').addEventListener('input', function (e) {
+  // LISTADO COMPLETO DE SECTORES
+  const sectoresDisponibles = [
+    "933-AA.VV. 25 DE ENERO", "933-AA.VV. CARMEN GARAY", "933-AA.VV. FUNDO NUEVA ESPERANZA",
+    "933-AA.VV. LOS LAURELES", "933-AA.VV. PUEBLO LIBRE", "933-AA.VV.01 DE MAYO",
+    "933-AA.VV.01 DE SETIEMBRE", "933-AA.VV.07 DE MAYO", "933-AA.VV.09 DE AGOSTO",
+    "933-AA.VV.15 DE AGOSTO", "933-AA.VV.CESAR VALLEJO", "933-AA.VV.CIUDAD COLINA",
+    "933-AA.VV.COLONIA TINGALESA", "933-AA.VV.EDUARDO VILLASANTE", "933-AA.VV.JOSE CARLOS MARIATEGUI",
+    "933-AA.VV.JOSE OLAYA BALANDRA", "933-AA.VV.JUAN PICON QUEDO", "933-AA.VV.JULIO MARTINEZ",
+    "933-AA.VV.LAS ALMENDRAS", "933-AA.VV.LAS AMAZONAS", "933-AA.VV.LAS PALMERAS",
+    "933-AA.VV.LOS ANGELES", "933-AA.VV.LOS JARDINES", "933-AA.VV.LOS PINOS",
+    "933-AA.VV.MARIA PARADO DE BELLIDO", "933-AA.VV.MONTERRICO", "933-AA.VV.NUEVA ESPERANZA",
+    "933-AA.VV.NUEVA JERUSALEN", "933-AA.VV.NUEV AMANECER", "933-AA.VV.PADRES DE FAMILIA",
+    "933-AA.VV.PANTOJA", "933-AA.VV.PEDREGAL", "933-AA.VV.POBLADORES DE CASTILLO GRANDE",
+    "933-AA.VV.SAN CARLOS", "933-AA.VV.SAN ISIDRO", "933-AA.VV.SAN MIGUEL",
+    "933-AA.VV.SANTA ROSA", "933-SOL NACIENTE", "933-COMUNIDAD ASERRADERO",
+    "933-COMUNIDAD CAPITAN SOTO", "933-COMUNIDAD HUANGANAPAMPA", "933-COMUNIDAD HUAYNACAPAC",
+    "933-COMUNIDAD JACINTILLO", "933-COMUNIDAD LA CURVA", "933-COMUNIDAD LA FLORIDA",
+    "933-COMUNIDAD MANCO CAPAC", "933-COMUNIDAD MANTARO", "933-COMUNIDAD MERCED DE LOCRO",
+    "933-COMUNIDAD MOYANO", "933-COMUNIDAD NUEVA ALTURA", "933-COMUNIDAD PACHACUTEC",
+    "933-COMUNIDAD PAPAYAL", "933-COMUNIDAD PICUROYACU", "933-COMUNIDAD SANTA ROSA DE CASTILLA",
+    "933-COMUNIDAD SHAMIRO", "933-COMUNIDAD SINCHI ROCCA", "933-COMUNIDAD VENADO PAMPA",
+    "933-COMUNIDAD YURIMAGUAS", "933-SIN SECTOR", "933-OTRO DISTRITO"
+  ];
+
+  let modalSectorInstance = null;
+
+  document.addEventListener('DOMContentLoaded', function() {
+    M.AutoInit();
+
+    // Inicializar Modal de Sector
+    const modalElem = document.getElementById('modalSector');
+    modalSectorInstance = M.Modal.init(modalElem, { dismissible: true });
+
+    // Cargar la lista inicial de sectores
+    cargarSectores(sectoresDisponibles);
+
+    const fnInput = document.getElementById('fn');
+    fnInput.addEventListener('input', function(e) {
+      let v = e.target.value.replace(/\D/g, '').slice(0, 8);
+      if (v.length >= 5) v = `${v.slice(0,2)}/${v.slice(2,4)}/${v.slice(4)}`;
+      else if (v.length >= 3) v = `${v.slice(0,2)}/${v.slice(2)}`;
+      e.target.value = v;
+    });
+
+    // Validación solo números para Manzana y Ficha Familiar
+    ['mz', 'ffamiliar'].forEach(id => {
+      document.getElementById(id).addEventListener('input', function(e) {
         this.value = this.value.replace(/[^0-9]/g, '');
+      });
     });
 
-    form.addEventListener('submit', e => {
-        e.preventDefault(); 
+    // Permite números y la barra diagonal '/' para el campo de teléfono
+    document.getElementById('telefono').addEventListener('input', function(e) {
+      this.value = this.value.replace(/[^0-9/]/g, '');
+    });
+  });
+
+  // FUNCIONES PARA EL MODAL DE SECTOR
+  function cargarSectores(lista) {
+    const contenedor = document.getElementById('listaSectoresContenedor');
+    contenedor.innerHTML = '';
+    
+    if (lista.length === 0) {
+      contenedor.innerHTML = '<div style="padding: 20px; text-align: center; color: #888;">No se encontraron resultados</div>';
+      return;
+    }
+
+    lista.forEach(sec => {
+      const item = document.createElement('div');
+      item.className = 'sector-item';
+      item.innerHTML = `<span>${sec}</span><i class="material-icons">chevron_right</i>`;
+      item.onclick = function() {
+        seleccionarSector(sec);
+      };
+      contenedor.appendChild(item);
+    });
+  }
+
+  function abrirModalSector() {
+    document.getElementById('inputBuscarSector').value = '';
+    cargarSectores(sectoresDisponibles);
+    modalSectorInstance.open();
+    setTimeout(() => {
+      document.getElementById('inputBuscarSector').focus();
+    }, 300);
+  }
+
+  function filtrarSectores() {
+    const texto = document.getElementById('inputBuscarSector').value.toUpperCase();
+    const filtrados = sectoresDisponibles.filter(sec => sec.toUpperCase().includes(texto));
+    cargarSectores(filtrados);
+  }
+
+  function seleccionarSector(valor) {
+    document.getElementById('sector').value = valor;
+    M.updateTextFields();
+    modalSectorInstance.close();
+  }
+
+  async function buscarDNI() {
+    const dni = document.getElementById('dni').value;
+    if(dni.length < 8) return M.toast({html: '⚠️ DNI incompleto'});
+    
+    document.getElementById('loader').style.display = 'block';
+    try {
+      const response = await fetch(`${WEB_APP_URL}?action=buscar&dni=${dni}`);
+      const data = await response.json();
+      document.getElementById('loader').style.display = 'none';
+      
+      if(data && data.status === "ok") {
+        document.getElementById('rowNum').value = data.row || "";
+        document.getElementById('nombreB').value = data.nombreB || "";
+        document.getElementById('fn').value = data.fn || "";
+        document.getElementById('sexo').value = data.sexo || "";
+        document.getElementById('hclinica').value = data.hclinica || "";
+        document.getElementById('ffamiliar').value = data.ffamiliar || "";
+        document.getElementById('telefono').value = data.telefono || "";
+        document.getElementById('estado_civil').value = data.estado_civil || "";
+        document.getElementById('sector').value = data.sector || "";
+        document.getElementById('ref_direccion').value = data.ref_direccion || "";
+        document.getElementById('mz').value = data.mz || "";
         
-        formBlock.style.display = 'none';
-        loadingBlock.style.display = 'block';
+        M.updateTextFields();
+        
+        var elems = document.querySelectorAll('select');
+        M.FormSelect.init(elems);
 
-        fetch(scriptURL, { method: 'POST', body: new FormData(form)})
-            .then(response => response.json())
-            .then(data => {
-                loadingBlock.style.display = 'none';
-                
-                if (data.result === 'success') {
-                    // Actualiza el cartel inferior con la magia de los cupos que van quedando
-                    const msg = `✨ ¡Inscripción registrada! Aún quedan ${data.cuposRestantes} cupos disponibles ✨`;
-                    successCounterBottom.innerText = msg;
-                    successBlock.style.display = 'block';
-                } else if (data.result === 'full') {
-                    errorBlock.style.display = 'block';
-                } else {
-                    alert('Error: ' + data.error);
-                    formBlock.style.display = 'block';
-                }
-            })
-            .catch(error => {
-                console.error('Error!', error.message);
-                alert('¡Ups! Hubo un problema de señal mágica. Inténtalo otra vez.');
-                loadingBlock.style.display = 'none';
-                formBlock.style.display = 'block';
-            });
-    });
+        M.toast({html: '✅ Datos encontrados. Verifique y actualice.'});
+      } else {
+        M.toast({html: 'ℹ️ Usuario Nuevo. Registre todos los datos.'});
+        
+        document.getElementById('rowNum').value = "";
+        const dniActual = document.getElementById('dni').value;
+        document.getElementById('pacienteForm').reset();
+        document.getElementById('dni').value = dniActual;
+        
+        M.updateTextFields();
+        var elems = document.querySelectorAll('select');
+        M.FormSelect.init(elems);
+      }
+    } catch (error) {
+      document.getElementById('loader').style.display = 'none';
+      M.toast({html: '❌ Error al conectar con el servidor'});
+      console.error(error);
+    }
+  }
+
+  document.getElementById('pacienteForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const sectorInput = document.getElementById('sector').value.trim();
+    if (!sectoresDisponibles.includes(sectorInput)) {
+      M.toast({html: '❌ Por favor, seleccione un Sector válido de la lista.'});
+      abrirModalSector();
+      return;
+    }
+
+    const telVal = document.getElementById('telefono').value.trim();
+    const telRegex = /^(\d{9}|\d{9}\/\d{9})$/;
+    if (!telRegex.test(telVal)) {
+      M.toast({html: '❌ Formato de teléfono inválido. Debe ser de 9 dígitos o 2 números separados por "/" (Ej: 987654321/912345678)'});
+      document.getElementById('telefono').focus();
+      return;
+    }
+
+    if(!document.getElementById('sexo').value) {
+        return M.toast({html: '⚠️ Seleccione el Sexo (Obligatorio)'});
+    }
+
+    document.getElementById('loader').style.display = 'block';
+    document.getElementById('btnSubmit').disabled = true;
+
+    const data = {
+      row: document.getElementById('rowNum').value,
+      dni: document.getElementById('dni').value,
+      nombreB: document.getElementById('nombreB').value.toUpperCase(),
+      fn: document.getElementById('fn').value,
+      sexo: document.getElementById('sexo').value,
+      hclinica: document.getElementById('hclinica').value,
+      ffamiliar: document.getElementById('ffamiliar').value,
+      telefono: telVal,
+      estado_civil: document.getElementById('estado_civil').value,
+      sector: sectorInput,
+      ref_direccion: document.getElementById('ref_direccion').value,
+      mz: document.getElementById('mz').value
+    };
+
+    try {
+      await fetch(WEB_APP_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify(data)
+      });
+
+      document.getElementById('loader').style.display = 'none';
+      document.getElementById('btnSubmit').disabled = false;
+      M.toast({html: '🚀 Guardado con éxito en el Censo'});
+      
+      this.reset();
+      document.getElementById('rowNum').value = "";
+      M.updateTextFields();
+      var elems = document.querySelectorAll('select');
+      M.FormSelect.init(elems);
+    } catch (error) {
+      document.getElementById('loader').style.display = 'none';
+      document.getElementById('btnSubmit').disabled = false;
+      M.toast({html: '❌ Fallo al guardar los datos'});
+    }
+  });
 </script>
-
 </body>
 </html>
