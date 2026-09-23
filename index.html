@@ -3,448 +3,851 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Censo DIT</title>
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
-  <style>
-    :root { 
-      --primary-color: #00796b; 
-      --secondary-color: #004d40; 
-      --modal-header-color: #3f51b5; /* Azul similar a la imagen */
-    }
-    body { background-color: #f0f4f4; color: #333; }
-    .header-panel { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; padding: 25px; border-radius: 8px 8px 0 0; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-    .container { margin-top: 2%; max-width: 900px; }
-    .card { border-radius: 12px; overflow: hidden; }
-    .btn-save { background-color: var(--primary-color) !important; width: 100%; height: 50px; font-weight: bold; font-size: 1.1rem; }
-    #loader { display: none; }
-    .section-title { font-size: 0.9rem; font-weight: bold; color: var(--primary-color); text-transform: uppercase; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px; }
-    input.validate.invalid { border-bottom: 1px solid #ff5252 !important; box-shadow: 0 1px 0 0 #ff5252 !important; }
+  <title>SIGIS_FED - Mapa Georreferenciado</title>
+  
+  <!-- Tailwind CSS & Lucide Icons -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    /* ESTILOS DEL MODAL DE SECTOR */
-    #modalSector {
-      border-radius: 12px;
-      max-height: 85%;
-      width: 90%;
-      max-width: 550px;
+  <!-- Leaflet Draw Plugin for Area / Polygon Selection -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
+  <!-- Turf.js for spatial point-in-polygon calculations -->
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+  <style>
+    #map { height: 100%; width: 100%; z-index: 1; }
+    
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
     }
-    .modal-header-custom {
-      background-color: var(--modal-header-color);
-      color: white;
-      padding: 15px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-weight: 600;
-      font-size: 1.1rem;
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
     }
-    .modal-header-custom .modal-close {
-      color: white;
-      cursor: pointer;
-      background: none;
-      border: none;
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
     }
-    .search-box-container {
-      padding: 15px 20px 5px 20px;
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
     }
-    .search-input-field {
-      border: 2px solid #3f51b5 !important;
-      border-radius: 20px !important;
-      padding: 0 15px !important;
-      box-sizing: border-box !important;
-      height: 42px !important;
-      font-size: 0.95rem !important;
-      text-transform: uppercase;
+
+    .leaflet-popup-content-wrapper {
+      padding: 0;
+      border-radius: 0.875rem;
+      overflow: hidden;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
     }
-    .search-input-field:focus {
-      box-shadow: 0 0 5px rgba(63, 81, 181, 0.5) !important;
+    .leaflet-popup-content {
+      margin: 0 !important;
+      line-height: 1.4;
     }
-    .sector-list {
-      max-height: 350px;
-      overflow-y: auto;
-      margin: 0;
-      padding: 0 10px;
+
+    .pulse-badge {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
-    .sector-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 15px;
-      border-bottom: 1px solid #e0e0e0;
-      cursor: pointer;
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: #333;
-      transition: background 0.2s;
-    }
-    .sector-item:hover {
-      background-color: #f1f3f9;
-    }
-    .sector-item i {
-      color: #3f51b5;
-      font-size: 1.1rem;
-    }
-    .modal-footer-custom {
-      padding: 10px 20px;
-      background-color: #f5f5f5;
-      text-align: right;
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .5; }
     }
   </style>
 </head>
-<body>
+<body class="bg-slate-100 font-sans text-slate-800 h-screen overflow-hidden flex flex-col">
 
-<div class="container">
-  <div class="card z-depth-3">
-    <div class="header-panel center-align">
-      <h4 style="margin:0;"><i class="material-icons medium">assignment_ind</i> CENSO DIT</h4>
-      <p style="margin: 5px 0 0;">Bienvenido</p>
+  <!-- DATALIST GLOBAL DE SECTORES RESTRINGIDOS -->
+  <datalist id="listaSectores">
+    <option value="933-AA.VV. 25 DE ENERO"></option>
+    <option value="933-AA.VV. CARMEN GARAY"></option>
+    <option value="933-AA.VV. FUNDO NUEVA ESPERANZA"></option>
+    <option value="933-AA.VV. LOS LAURELES"></option>
+    <option value="933-AA.VV. PUEBLO LIBRE"></option>
+    <option value="933-AA.VV.01 DE MAYO"></option>
+    <option value="933-AA.VV.01 DE SETIEMBRE"></option>
+    <option value="933-AA.VV.07 DE MAYO"></option>
+    <option value="933-AA.VV.09 DE AGOSTO"></option>
+    <option value="933-AA.VV.15 DE AGOSTO"></option>
+    <option value="933-AA.VV.CESAR VALLEJO"></option>
+    <option value="933-AA.VV.CIUDAD COLINA"></option>
+    <option value="933-AA.VV.COLONIA TINGALESA"></option>
+    <option value="933-AA.VV.EDUARDO VILLASANTE"></option>
+    <option value="933-AA.VV.JOSE CARLOS MARIATEGUI"></option>
+    <option value="933-AA.VV.JOSE OLAYA BALANDRA"></option>
+    <option value="933-AA.VV.JUAN PICON QUEDO"></option>
+    <option value="933-AA.VV.JULIO MARTINEZ"></option>
+    <option value="933-AA.VV.LAS ALMENDRAS"></option>
+    <option value="933-AA.VV.LAS AMAZONAS"></option>
+    <option value="933-AA.VV.LAS PALMERAS"></option>
+    <option value="933-AA.VV.LOS ANGELES"></option>
+    <option value="933-AA.VV.LOS JARDINES"></option>
+    <option value="933-AA.VV.LOS PINOS"></option>
+    <option value="933-AA.VV.MARIA PARADO DE BELLIDO"></option>
+    <option value="933-AA.VV.MONTERRICO"></option>
+    <option value="933-AA.VV.NUEVA ESPERANZA"></option>
+    <option value="933-AA.VV.NUEVA JERUSALEN"></option>
+    <option value="933-AA.VV.NUEV AMANECER"></option>
+    <option value="933-AA.VV.PADRES DE FAMILIA"></option>
+    <option value="933-AA.VV.PANTOJA"></option>
+    <option value="933-AA.VV.PEDREGAL"></option>
+    <option value="933-AA.VV.POBLADORES DE CASTILLO GRANDE"></option>
+    <option value="933-AA.VV.SAN CARLOS"></option>
+    <option value="933-AA.VV.SAN ISIDRO"></option>
+    <option value="933-AA.VV.SAN MIGUEL"></option>
+    <option value="933-AA.VV.SANTA ROSA"></option>
+    <option value="933-SOL NACIENTE"></option>
+    <option value="933-COMUNIDAD ASERRADERO"></option>
+    <option value="933-COMUNIDAD CAPITAN SOTO"></option>
+    <option value="933-COMUNIDAD HUANGANAPAMPA"></option>
+    <option value="933-COMUNIDAD HUAYNACAPAC"></option>
+    <option value="933-COMUNIDAD JACINTILLO"></option>
+    <option value="933-COMUNIDAD LA CURVA"></option>
+    <option value="933-COMUNIDAD LA FLORIDA"></option>
+    <option value="933-COMUNIDAD MANCO CAPAC"></option>
+    <option value="933-COMUNIDAD MANTARO"></option>
+    <option value="933-COMUNIDAD MERCED DE LOCRO"></option>
+    <option value="933-COMUNIDAD MOYANO"></option>
+    <option value="933-COMUNIDAD NUEVA ALTURA"></option>
+    <option value="933-COMUNIDAD PACHACUTEC"></option>
+    <option value="933-COMUNIDAD PAPAYAL"></option>
+    <option value="933-COMUNIDAD PICUROYACU"></option>
+    <option value="933-COMUNIDAD SANTA ROSA DE CASTILLA"></option>
+    <option value="933-COMUNIDAD SHAMIRO"></option>
+    <option value="933-COMUNIDAD SINCHI ROCCA"></option>
+    <option value="933-COMUNIDAD VENADO PAMPA"></option>
+    <option value="933-COMUNIDAD YURIMAGUAS"></option>
+    <option value="933-SIN SECTOR"></option>
+  </datalist>
+
+  <header class="bg-blue-900 text-white shadow-md z-30 px-4 py-2.5 flex justify-between items-center h-[60px] border-b border-blue-800">
+    <div class="flex items-center space-x-3">
+      <div class="p-2 bg-blue-800/80 rounded-xl border border-blue-700/50 flex items-center justify-center shadow-inner">
+        <i data-lucide="map-pin" class="w-5 h-5 text-emerald-400"></i>
+      </div>
+      <div>
+        <h1 class="text-sm md:text-base font-bold leading-tight tracking-wide">SIGIS_FED - Mapa de Georreferenciación</h1>
+        <p class="text-[10px] md:text-xs text-blue-200">Monitoreo de Familias y Personas Georreferenciadas</p>
+      </div>
     </div>
-    
-    <div class="card-content">
-      <form id="pacienteForm">
-        <div class="row">
-          <div class="input-field col s12 m8">
-            <i class="material-icons prefix">fingerprint</i>
-            <input id="dni" type="text" class="validate" required pattern="[0-9]{8}" maxlength="8">
-            <label for="dni">DNI (Obligatorio - 8 dígitos)</label>
-          </div>
-          <div class="col s12 m4">
-            <button type="button" class="btn waves-effect blue darken-3" onclick="buscarDNI()" style="width:100%; margin-top:15px;">
-              <i class="material-icons left">search</i> Verificar
-            </button>
-          </div>
+
+    <div class="flex items-center gap-2 md:gap-3">
+      <span id="badgeConteo" class="bg-blue-950/90 text-emerald-300 text-xs px-3 py-1.5 rounded-full font-bold border border-emerald-500/30 flex items-center gap-1.5 shadow-inner">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-badge"></span>
+        <span id="textoBadge">Cargando datos...</span>
+      </span>
+      <button onclick="cargarBaseDatos()" title="Recargar Datos" class="p-2 bg-blue-800 hover:bg-blue-700 rounded-lg transition text-white border border-blue-700 active:scale-95 flex items-center justify-center shadow">
+        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+      </button>
+      <button id="btnToggleFilters" onclick="toggleMobileSidebar()" class="md:hidden p-2 bg-blue-800 hover:bg-blue-700 rounded-lg transition text-white border border-blue-700">
+        <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- PANEL PRINCIPAL CONTENEDOR (FILTROS + MAPA) -->
+  <div class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+
+    <aside id="sidebarFiltros" class="w-full md:w-80 bg-white border-r border-slate-200 shadow-xl p-4 overflow-y-auto space-y-3.5 z-20 transition-all duration-300 custom-scrollbar max-h-[55vh] md:max-h-none border-b md:border-b-0">
+      
+      <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+        <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="filter" class="w-4 h-4 text-blue-600"></i> Filtros de Búsqueda
+        </h2>
+        <button onclick="limpiarFiltros()" class="text-[11px] text-blue-600 hover:text-blue-800 font-semibold transition hover:underline flex items-center gap-1">
+          <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Limpiar Filtros
+        </button>
+      </div>
+
+      <!-- FILTRO FICHA FAMILIAR -->
+      <div>
+        <label for="f_ffamiliar" class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Ficha Familiar</label>
+        <div class="relative">
+          <input type="text" id="f_ffamiliar" placeholder="Ej: 0001234" oninput="aplicarFiltros()"
+            class="w-full pl-8 pr-2.5 py-1.5 border border-slate-300 rounded-lg text-xs font-mono font-bold uppercase focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-slate-50/50 focus:bg-white">
+          <i data-lucide="file-text" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5"></i>
         </div>
+      </div>
 
-        <div class="section-title">Datos Personales</div>
-        <div class="row">
-          <div class="input-field col s12">
-            <i class="material-icons prefix">person</i>
-            <input id="nombreB" type="text" class="validate" required style="text-transform: uppercase;">
-            <label for="nombreB">Apellidos y Nombres Completos (Obligatorio)</label>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="input-field col s12 m4">
-            <i class="material-icons prefix">event</i>
-            <input id="fn" type="text" placeholder="DD/MM/YYYY" maxlength="10" required class="validate">
-            <label for="fn" class="active">Fecha de Nacimiento (Obligatorio)</label>
-          </div>
-          <div class="input-field col s12 m4">
-            <select id="sexo" required>
-              <option value="" disabled selected>Sexo</option>
-              <option value="M">Masculino</option>
-              <option value="F">Femenino</option>
-            </select>
-            <label>Sexo (Obligatorio)</label>
-          </div>
-          <div class="input-field col s12 m4">
-            <select id="estado_civil">
-              <option value="" disabled selected>Estado Civil</option>
-              <option value="SOLTERO">Soltero/a</option>
-              <option value="CONVIVIENTE">Conviviente</option>
-              <option value="CASADO">Casado/a</option>
-              <option value="VIUDO">Viudo/a</option>
-              <option value="DIVORCIADO">Divorciado/a</option>
-            </select>
-            <label>Estado Civil (Opcional)</label>
-          </div>
-        </div>
-
-        <div class="section-title">Ubicación y Contacto</div>
-        <div class="row">
-          <div class="input-field col s12 m8">
-            <i class="material-icons prefix">map</i>
-            <!-- CAMPO DE SECTOR MEJORADO CON INTERFAZ TIPO MODAL -->
-            <input id="sector" type="text" placeholder="Haga clic para seleccionar..." required class="validate" readonly onclick="abrirModalSector()">
-            <label for="sector" class="active">Sector (Obligatorio)</label>
-          </div>
-          <div class="input-field col s12 m4">
-            <input id="mz" type="text">
-            <label for="mz">Manzana (Opcional)</label>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="input-field col s12 m4">
-            <i class="material-icons prefix">phone</i>
-            <input id="telefono" type="text" maxlength="19" required class="validate">
-            <label for="telefono">Celular (Ej: 987654321 / 912345678)</label>
-          </div>
-          <div class="input-field col s12 m8">
-            <i class="material-icons prefix">place</i>
-            <input id="ref_direccion" type="text" required class="validate">
-            <label for="ref_direccion">Referencia de Dirección (Obligatorio)</label>
-          </div>
-        </div>
-
-        <div class="section-title">Historial</div>
-        <div class="row">
-          <div class="input-field col s12 m6">
-            <i class="material-icons prefix">folder</i>
-            <input id="hclinica" type="text" required class="validate">
-            <label for="hclinica">Historia Clínica (Obligatorio)</label>
-          </div>
-          <div class="input-field col s12 m6">
-            <i class="material-icons prefix">description</i>
-            <input id="ffamiliar" type="text" maxlength="7" class="validate">
-            <label for="ffamiliar">Ficha Familiar (Máx 7 números - Opcional)</label>
-          </div>
-        </div>
-
-        <input type="hidden" id="rowNum" value="">
-
-        <div class="center-align">
-          <button id="btnSubmit" class="btn waves-effect btn-save" type="submit">
-            <i class="material-icons right">cloud_upload</i> Guardar
+      <!-- FILTRO SECTOR CON MODAL Y AUTOCOMPLETADO -->
+      <div>
+        <label for="f_sector" class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Sector</label>
+        <div class="relative">
+          <input type="text" id="f_sector" list="listaSectores" placeholder="Todos los sectores..." onchange="aplicarFiltros()" oninput="aplicarFiltros()"
+            class="w-full pl-8 pr-8 py-1.5 border border-slate-300 rounded-lg text-xs font-semibold uppercase focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-slate-50/50 focus:bg-white">
+          <i data-lucide="map" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5"></i>
+          <button type="button" onclick="abrirModalSector()" class="absolute right-2 top-2 text-blue-600 hover:text-blue-800 font-bold text-xs" title="Seleccionar de la lista">
+            <i data-lucide="search" class="w-4 h-4"></i>
           </button>
         </div>
+      </div>
 
-        <div id="loader" class="center-align" style="margin-top:20px;">
-          <div class="preloader-wrapper small active">
-            <div class="spinner-layer spinner-green-only">
-              <div class="circle-clipper left"><div class="circle"></div></div>
-              <div class="gap-patch"><div class="circle"></div></div>
-              <div class="circle-clipper right"><div class="circle"></div></div>
-            </div>
-          </div>
-          <p>Procesando información...</p>
+      <div class="grid grid-cols-2 gap-2">
+        <!-- FILTRO MANZANA (MZ - BÚSQUEDA EXACTA) -->
+        <div>
+          <label for="f_mz" class="block text-[11px] font-bold text-slate-600 uppercase mb-1 flex items-center gap-1">
+            Manzana (Mz) <span class="text-[9px] text-blue-600 font-normal">(Exacta)</span>
+          </label>
+          <input type="text" id="f_mz" placeholder="Ej: 5" oninput="aplicarFiltros()"
+            class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-slate-50/50 focus:bg-white">
         </div>
-      </form>
+
+        <!-- FILTRO DNI -->
+        <div>
+          <label for="f_dni" class="block text-[11px] font-bold text-slate-600 uppercase mb-1">DNI</label>
+          <input type="text" id="f_dni" placeholder="Ej: 70000000" maxlength="8" oninput="aplicarFiltros()"
+            class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-slate-50/50 focus:bg-white">
+        </div>
+      </div>
+
+      <!-- FILTRO APELLIDOS Y NOMBRES -->
+      <div>
+        <label for="f_nombre" class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Apellidos y Nombres</label>
+        <div class="relative">
+          <input type="text" id="f_nombre" placeholder="Buscar por nombre..." oninput="aplicarFiltros()"
+            class="w-full pl-8 pr-2.5 py-1.5 border border-slate-300 rounded-lg text-xs uppercase focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-slate-50/50 focus:bg-white">
+          <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5"></i>
+        </div>
+      </div>
+
+      <!-- FILTRO RANGO DE FECHA DE NACIMIENTO -->
+      <div class="bg-blue-50/70 p-3 rounded-xl border border-blue-100 space-y-2">
+        <label class="block text-[11px] font-bold text-blue-900 uppercase flex items-center gap-1.5">
+          <i data-lucide="calendar" class="w-3.5 h-3.5 text-blue-600"></i> Rango Fecha Nacimiento
+        </label>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <span class="text-[10px] text-slate-500 font-semibold block mb-0.5">Desde:</span>
+            <input type="date" id="f_fn_desde" onchange="aplicarFiltros()"
+              class="w-full px-2 py-1 border border-slate-300 rounded-md text-xs outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-500 font-semibold block mb-0.5">Hasta:</span>
+            <input type="date" id="f_fn_hasta" onchange="aplicarFiltros()"
+              class="w-full px-2 py-1 border border-slate-300 rounded-md text-xs outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL DE ESTADÍSTICAS POR ETAPA DE VIDA EN SIDEBAR -->
+      <div class="bg-slate-900 text-white p-3.5 rounded-xl space-y-2 shadow-lg border border-slate-800">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-1.5">
+          <h3 class="text-xs font-bold text-emerald-400 flex items-center gap-1.5 uppercase">
+            <i data-lucide="pie-chart" class="w-4 h-4"></i> Estadísticas Filtradas
+          </h3>
+          <span id="statTotal" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300 font-mono">0 pers.</span>
+        </div>
+        <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+          <div class="bg-slate-800/80 p-2 rounded-lg border border-slate-700/60">
+            <span class="text-slate-400 block text-[10px] font-semibold">Niños (&lt;12)</span>
+            <span id="statNinos" class="text-emerald-400 font-bold text-sm">0</span>
+          </div>
+          <div class="bg-slate-800/80 p-2 rounded-lg border border-slate-700/60">
+            <span class="text-slate-400 block text-[10px] font-semibold">Adolesc. (12-17)</span>
+            <span id="statAdolescentes" class="text-cyan-400 font-bold text-sm">0</span>
+          </div>
+          <div class="bg-slate-800/80 p-2 rounded-lg border border-slate-700/60">
+            <span class="text-slate-400 block text-[10px] font-semibold">Jóvenes (18-29)</span>
+            <span id="statJovenes" class="text-blue-400 font-bold text-sm">0</span>
+          </div>
+          <div class="bg-slate-800/80 p-2 rounded-lg border border-slate-700/60">
+            <span class="text-slate-400 block text-[10px] font-semibold">Adultos (30-59)</span>
+            <span id="statAdultos" class="text-amber-400 font-bold text-sm">0</span>
+          </div>
+          <div class="bg-slate-800/80 p-2 rounded-lg border border-slate-700/60 col-span-2">
+            <span class="text-slate-400 block text-[10px] font-semibold">Ancianos (60+)</span>
+            <span id="statAncianos" class="text-rose-400 font-bold text-sm">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOTÓN REINICIAR TRAZO EN DIBUJO DE MAPA -->
+      <div id="containerBorrarTrazo" class="hidden">
+        <button onclick="limpiarDibujoMapa()" class="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow">
+          <i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar Selección del Mapa
+        </button>
+      </div>
+
+    </aside>
+
+    <!-- MAPA LEAFLET CONTAINER -->
+    <main class="flex-1 relative h-full">
+      <div id="map"></div>
+    </main>
+  </div>
+
+  <!-- MODAL SELECCIONAR SECTOR REGISTRADO -->
+  <div id="modalSector" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[85vh] animate-in fade-in zoom-in duration-200">
+      
+      <!-- HEADER MODAL -->
+      <div class="bg-indigo-600 text-white px-5 py-4 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="map-pin" class="w-5 h-5 text-white"></i>
+          <h3 class="font-bold text-base tracking-wide">Seleccionar Sector Registrado</h3>
+        </div>
+        <button onclick="cerrarModalSector()" class="text-white/80 hover:text-white transition hover:scale-110">
+          <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+      </div>
+
+      <!-- BUSCADOR DENTRO DEL MODAL -->
+      <div class="p-4 border-b border-slate-100 bg-slate-50/50">
+        <div class="relative">
+          <input type="text" id="inputBuscarSectorModal" oninput="filtrarListaModalSector()" placeholder="ESCRIBA PARA BUSCAR SECTOR..."
+            class="w-full pl-4 pr-10 py-2.5 rounded-xl border border-indigo-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-xs font-semibold uppercase outline-none shadow-sm transition">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute right-3.5 top-3"></i>
+        </div>
+      </div>
+
+      <!-- LISTA SCROLLABLE DE SECTORES -->
+      <div id="listaSectoresModal" class="overflow-y-auto flex-1 p-2 divide-y divide-slate-100 custom-scrollbar max-h-[50vh]">
+        <!-- Generado dinámicamente -->
+      </div>
+
+      <!-- FOOTER MODAL -->
+      <div class="p-3 bg-slate-100 border-t border-slate-200 flex justify-end">
+        <button onclick="cerrarModalSector()" class="px-5 py-2 bg-slate-300 hover:bg-slate-400 text-slate-800 font-bold text-xs rounded-xl transition uppercase tracking-wider">
+          CANCELAR
+        </button>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- MODAL PARA SELECCIÓN DE SECTOR -->
-<div id="modalSector" class="modal">
-  <div class="modal-header-custom">
-    <span><i class="material-icons left" style="font-size:1.2rem; vertical-align:middle;">location_on</i> Seleccionar Sector Registrado</span>
-    <i class="material-icons modal-close">close</i>
-  </div>
-  <div class="search-box-container">
-    <input type="text" id="inputBuscarSector" class="search-input-field" placeholder="ESCRIBA PARA BUSCAR SECTOR..." onkeyup="filtrarSectores()">
-  </div>
-  <div class="sector-list" id="listaSectoresContenedor">
-    <!-- Lista generada dinámicamente mediante JS -->
-  </div>
-  <div class="modal-footer-custom">
-    <a href="#!" class="modal-close btn-flat grey lighten-2 waves-effect" style="border-radius: 8px;">Cancelar</a>
-  </div>
-</div>
+  <script>
+    lucide.createIcons();
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-<script>
-  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwkYPuO13juZBjhs7wrxX0MEYy-hPeg0HyzjDJ9_Oy-Yq3Fih99wFAyI5xlbJ_u4rBX1g/exec";
+    const URL_CENSO = "https://script.google.com/macros/s/AKfycbz-PaNW15W43wBS8AmlEHfFe4QrUnITK-8yEnvwoGUnpw7PdbpNvJhPCc4q5qDs8c3WWg/exec";
+    let baseDatos = [];
+    let map = null;
+    let markersLayer = L.layerGroup();
+    let drawnItems = new L.FeatureGroup();
+    let activePolygonLayer = null;
 
-  // LISTADO COMPLETO DE SECTORES
-  const sectoresDisponibles = [
-    "933-AA.VV. 25 DE ENERO", "933-AA.VV. CARMEN GARAY", "933-AA.VV. FUNDO NUEVA ESPERANZA",
-    "933-AA.VV. LOS LAURELES", "933-AA.VV. PUEBLO LIBRE", "933-AA.VV.01 DE MAYO",
-    "933-AA.VV.01 DE SETIEMBRE", "933-AA.VV.07 DE MAYO", "933-AA.VV.09 DE AGOSTO",
-    "933-AA.VV.15 DE AGOSTO", "933-AA.VV.CESAR VALLEJO", "933-AA.VV.CIUDAD COLINA",
-    "933-AA.VV.COLONIA TINGALESA", "933-AA.VV.EDUARDO VILLASANTE", "933-AA.VV.JOSE CARLOS MARIATEGUI",
-    "933-AA.VV.JOSE OLAYA BALANDRA", "933-AA.VV.JUAN PICON QUEDO", "933-AA.VV.JULIO MARTINEZ",
-    "933-AA.VV.LAS ALMENDRAS", "933-AA.VV.LAS AMAZONAS", "933-AA.VV.LAS PALMERAS",
-    "933-AA.VV.LOS ANGELES", "933-AA.VV.LOS JARDINES", "933-AA.VV.LOS PINOS",
-    "933-AA.VV.MARIA PARADO DE BELLIDO", "933-AA.VV.MONTERRICO", "933-AA.VV.NUEVA ESPERANZA",
-    "933-AA.VV.NUEVA JERUSALEN", "933-AA.VV.NUEV AMANECER", "933-AA.VV.PADRES DE FAMILIA",
-    "933-AA.VV.PANTOJA", "933-AA.VV.PEDREGAL", "933-AA.VV.POBLADORES DE CASTILLO GRANDE",
-    "933-AA.VV.SAN CARLOS", "933-AA.VV.SAN ISIDRO", "933-AA.VV.SAN MIGUEL",
-    "933-AA.VV.SANTA ROSA", "933-SOL NACIENTE", "933-COMUNIDAD ASERRADERO",
-    "933-COMUNIDAD CAPITAN SOTO", "933-COMUNIDAD HUANGANAPAMPA", "933-COMUNIDAD HUAYNACAPAC",
-    "933-COMUNIDAD JACINTILLO", "933-COMUNIDAD LA CURVA", "933-COMUNIDAD LA FLORIDA",
-    "933-COMUNIDAD MANCO CAPAC", "933-COMUNIDAD MANTARO", "933-COMUNIDAD MERCED DE LOCRO",
-    "933-COMUNIDAD MOYANO", "933-COMUNIDAD NUEVA ALTURA", "933-COMUNIDAD PACHACUTEC",
-    "933-COMUNIDAD PAPAYAL", "933-COMUNIDAD PICUROYACU", "933-COMUNIDAD SANTA ROSA DE CASTILLA",
-    "933-COMUNIDAD SHAMIRO", "933-COMUNIDAD SINCHI ROCCA", "933-COMUNIDAD VENADO PAMPA",
-    "933-COMUNIDAD YURIMAGUAS", "933-SIN SECTOR", "933-OTRO DISTRITO"
-  ];
+    // Lista Maestra de Sectores extraída del Datalist
+    const sectoresMaster = Array.from(document.querySelectorAll('#listaSectores option')).map(opt => opt.value);
 
-  let modalSectorInstance = null;
-
-  document.addEventListener('DOMContentLoaded', function() {
-    M.AutoInit();
-
-    // Inicializar Modal de Sector
-    const modalElem = document.getElementById('modalSector');
-    modalSectorInstance = M.Modal.init(modalElem, { dismissible: true });
-
-    // Cargar la lista inicial de sectores
-    cargarSectores(sectoresDisponibles);
-
-    const fnInput = document.getElementById('fn');
-    fnInput.addEventListener('input', function(e) {
-      let v = e.target.value.replace(/\D/g, '').slice(0, 8);
-      if (v.length >= 5) v = `${v.slice(0,2)}/${v.slice(2,4)}/${v.slice(4)}`;
-      else if (v.length >= 3) v = `${v.slice(0,2)}/${v.slice(2)}`;
-      e.target.value = v;
-    });
-
-    // Validación solo números para Manzana y Ficha Familiar
-    ['mz', 'ffamiliar'].forEach(id => {
-      document.getElementById(id).addEventListener('input', function(e) {
-        this.value = this.value.replace(/[^0-9]/g, '');
-      });
-    });
-
-    // Permite números y la barra diagonal '/' para el campo de teléfono
-    document.getElementById('telefono').addEventListener('input', function(e) {
-      this.value = this.value.replace(/[^0-9/]/g, '');
-    });
-  });
-
-  // FUNCIONES PARA EL MODAL DE SECTOR
-  function cargarSectores(lista) {
-    const contenedor = document.getElementById('listaSectoresContenedor');
-    contenedor.innerHTML = '';
-    
-    if (lista.length === 0) {
-      contenedor.innerHTML = '<div style="padding: 20px; text-align: center; color: #888;">No se encontraron resultados</div>';
-      return;
-    }
-
-    lista.forEach(sec => {
-      const item = document.createElement('div');
-      item.className = 'sector-item';
-      item.innerHTML = `<span>${sec}</span><i class="material-icons">chevron_right</i>`;
-      item.onclick = function() {
-        seleccionarSector(sec);
-      };
-      contenedor.appendChild(item);
-    });
-  }
-
-  function abrirModalSector() {
-    document.getElementById('inputBuscarSector').value = '';
-    cargarSectores(sectoresDisponibles);
-    modalSectorInstance.open();
-    setTimeout(() => {
-      document.getElementById('inputBuscarSector').focus();
-    }, 300);
-  }
-
-  function filtrarSectores() {
-    const texto = document.getElementById('inputBuscarSector').value.toUpperCase();
-    const filtrados = sectoresDisponibles.filter(sec => sec.toUpperCase().includes(texto));
-    cargarSectores(filtrados);
-  }
-
-  function seleccionarSector(valor) {
-    document.getElementById('sector').value = valor;
-    M.updateTextFields();
-    modalSectorInstance.close();
-  }
-
-  async function buscarDNI() {
-    const dni = document.getElementById('dni').value;
-    if(dni.length < 8) return M.toast({html: '⚠️ DNI incompleto'});
-    
-    document.getElementById('loader').style.display = 'block';
-    try {
-      const response = await fetch(`${WEB_APP_URL}?action=buscar&dni=${dni}`);
-      const data = await response.json();
-      document.getElementById('loader').style.display = 'none';
-      
-      if(data && data.status === "ok") {
-        document.getElementById('rowNum').value = data.row || "";
-        document.getElementById('nombreB').value = data.nombreB || "";
-        document.getElementById('fn').value = data.fn || "";
-        document.getElementById('sexo').value = data.sexo || "";
-        document.getElementById('hclinica').value = data.hclinica || "";
-        document.getElementById('ffamiliar').value = data.ffamiliar || "";
-        document.getElementById('telefono').value = data.telefono || "";
-        document.getElementById('estado_civil').value = data.estado_civil || "";
-        document.getElementById('sector').value = data.sector || "";
-        document.getElementById('ref_direccion').value = data.ref_direccion || "";
-        document.getElementById('mz').value = data.mz || "";
-        
-        M.updateTextFields();
-        
-        var elems = document.querySelectorAll('select');
-        M.FormSelect.init(elems);
-
-        M.toast({html: '✅ Datos encontrados. Verifique y actualice.'});
-      } else {
-        M.toast({html: 'ℹ️ Usuario Nuevo. Registre todos los datos.'});
-        
-        document.getElementById('rowNum').value = "";
-        const dniActual = document.getElementById('dni').value;
-        document.getElementById('pacienteForm').reset();
-        document.getElementById('dni').value = dniActual;
-        
-        M.updateTextFields();
-        var elems = document.querySelectorAll('select');
-        M.FormSelect.init(elems);
+    // MOCK DATA COMPLETO DE RESPALDO CON EDADES
+    const MOCK_DATA = [
+      {
+        ffamiliar: "FF-001021",
+        sector: "933-AA.VV. LOS LAURELES",
+        mz: "5",
+        ref_direccion: "Jr. Los Pinos Mz 5 Lt 4",
+        dni: "72841029",
+        nombreB: "SANTOS ROJAS MARIA ELENA",
+        fn: "15/04/2018", // Niño (8 años)
+        hclinica: "HC-9821",
+        telefono: "962182019",
+        georeferencia: "-9.288639, -76.008830"
+      },
+      {
+        ffamiliar: "FF-001021",
+        sector: "933-AA.VV. LOS LAURELES",
+        mz: "5",
+        ref_direccion: "Jr. Los Pinos Mz 5 Lt 4",
+        dni: "41029831",
+        nombreB: "LOPEZ GARCIA CARLOS",
+        fn: "10/08/1988", // Adulto (38 años)
+        hclinica: "HC-9822",
+        telefono: "962182019",
+        georeferencia: "-9.288639, -76.008830"
+      },
+      {
+        ffamiliar: "FF-001021",
+        sector: "933-AA.VV. LOS LAURELES",
+        mz: "5",
+        ref_direccion: "Jr. Los Pinos Mz 5 Lt 4",
+        dni: "76102981",
+        nombreB: "LOPEZ SANTOS BRANDON",
+        fn: "05/12/2010", // Adolescente (15 años)
+        hclinica: "HC-9823",
+        telefono: "962182019",
+        georeferencia: "-9.288639, -76.008830"
+      },
+      {
+        ffamiliar: "FF-002045",
+        sector: "933-AA.VV. 25 DE ENERO",
+        mz: "2",
+        ref_direccion: "Av. Peru Mz 2 Lt 12",
+        dni: "22891024",
+        nombreB: "RAMIREZ BAZAN JOSE HUMBERTO",
+        fn: "22/01/1955", // Anciano (71 años)
+        hclinica: "HC-4412",
+        telefono: "981273612",
+        georeferencia: "-9.285100, -76.004200"
+      },
+      {
+        ffamiliar: "FF-002045",
+        sector: "933-AA.VV. 25 DE ENERO",
+        mz: "2",
+        ref_direccion: "Av. Peru Mz 2 Lt 12",
+        dni: "22894511",
+        nombreB: "GOMERO ALVARADO LUZ YOLANDA",
+        fn: "18/06/2002", // Joven (24 años)
+        hclinica: "HC-4413",
+        telefono: "981273612",
+        georeferencia: "-9.285100, -76.004200"
+      },
+      {
+        ffamiliar: "FF-003088",
+        sector: "933-COMUNIDAD JACINTILLO",
+        mz: "12",
+        ref_direccion: "Carretera Jacintillo Km 2",
+        dni: "71029384",
+        nombreB: "VARGAS PEREZ SEBASTIAN",
+        fn: "30/09/1998", // Joven (27 años)
+        hclinica: "HC-7731",
+        telefono: "935128912",
+        georeferencia: "-9.301200, -76.015400"
+      },
+      {
+        ffamiliar: "FF-004012",
+        sector: "933-AA.VV. SANTA ROSA",
+        mz: "15", // Manzana 15 (no debe salir al buscar "5")
+        ref_direccion: "Pasaje Las Flores Mz 15 Lt 2",
+        dni: "45129837",
+        nombreB: "VALVERDE TORRES LUCIA",
+        fn: "12/03/1995",
+        hclinica: "HC-3301",
+        telefono: "974123891",
+        georeferencia: "-9.292100, -76.001100"
       }
-    } catch (error) {
-      document.getElementById('loader').style.display = 'none';
-      M.toast({html: '❌ Error al conectar con el servidor'});
-      console.error(error);
-    }
-  }
+    ];
 
-  document.getElementById('pacienteForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const sectorInput = document.getElementById('sector').value.trim();
-    if (!sectoresDisponibles.includes(sectorInput)) {
-      M.toast({html: '❌ Por favor, seleccione un Sector válido de la lista.'});
-      abrirModalSector();
-      return;
-    }
+    function initMap() {
+      // Coordenadas Tingo María / Castillo Grande
+      map = L.map('map', {
+        zoomControl: false
+      }).setView([-9.288639, -76.008830], 15);
 
-    const telVal = document.getElementById('telefono').value.trim();
-    const telRegex = /^(\d{9}|\d{9}\/\d{9})$/;
-    if (!telRegex.test(telVal)) {
-      M.toast({html: '❌ Formato de teléfono inválido. Debe ser de 9 dígitos o 2 números separados por "/" (Ej: 987654321/912345678)'});
-      document.getElementById('telefono').focus();
-      return;
-    }
+      L.control.zoom({ position: 'topright' }).addTo(map);
 
-    if(!document.getElementById('sexo').value) {
-        return M.toast({html: '⚠️ Seleccione el Sexo (Obligatorio)'});
-    }
-
-    document.getElementById('loader').style.display = 'block';
-    document.getElementById('btnSubmit').disabled = true;
-
-    const data = {
-      row: document.getElementById('rowNum').value,
-      dni: document.getElementById('dni').value,
-      nombreB: document.getElementById('nombreB').value.toUpperCase(),
-      fn: document.getElementById('fn').value,
-      sexo: document.getElementById('sexo').value,
-      hclinica: document.getElementById('hclinica').value,
-      ffamiliar: document.getElementById('ffamiliar').value,
-      telefono: telVal,
-      estado_civil: document.getElementById('estado_civil').value,
-      sector: sectorInput,
-      ref_direccion: document.getElementById('ref_direccion').value,
-      mz: document.getElementById('mz').value
-    };
-
-    try {
-      await fetch(WEB_APP_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        body: JSON.stringify(data)
+      // CAPAS DE MAPA HD (GOOGLE SATELLITE HYBRID + ESRI WORLD IMAGERY)
+      const googleSat = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
+        maxZoom: 22,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        attribution: '&copy; Google Maps Satellite'
       });
 
-      document.getElementById('loader').style.display = 'none';
-      document.getElementById('btnSubmit').disabled = false;
-      M.toast({html: '🚀 Guardado con éxito en el Censo'});
-      
-      this.reset();
-      document.getElementById('rowNum').value = "";
-      M.updateTextFields();
-      var elems = document.querySelectorAll('select');
-      M.FormSelect.init(elems);
-    } catch (error) {
-      document.getElementById('loader').style.display = 'none';
-      document.getElementById('btnSubmit').disabled = false;
-      M.toast({html: '❌ Fallo al guardar los datos'});
+      const esriClarity = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        attribution: 'Tiles &copy; Esri'
+      });
+
+      const callejeroOSM = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap'
+      });
+
+      // Añadir la vista satelital estilo Google Earth por defecto
+      googleSat.addTo(map);
+
+      const baseMaps = {
+        "Google Satellite HD (Casas)": googleSat,
+        "Esri World Imagery": esriClarity,
+        "Callejero OSM": callejeroOSM
+      };
+      L.control.layers(baseMaps, null, { position: 'topright' }).addTo(map);
+
+      // CAPA Y HERRAMIENTAS DE DIBUJO (LEAFLET DRAW)
+      map.addLayer(drawnItems);
+      map.addLayer(markersLayer);
+
+      const drawControl = new L.Control.Draw({
+        position: 'topleft',
+        draw: {
+          polygon: {
+            allowIntersection: false,
+            drawError: { color: '#e11d48', timeout: 1000 },
+            shapeOptions: { color: '#2563eb', fillColor: '#3b82f6', fillOpacity: 0.35, weight: 3 }
+          },
+          rectangle: {
+            shapeOptions: { color: '#059669', fillColor: '#10b981', fillOpacity: 0.35, weight: 3 }
+          },
+          circle: false,
+          polyline: false,
+          circlemarker: false,
+          marker: false
+        },
+        edit: {
+          featureGroup: drawnItems,
+          remove: true
+        }
+      });
+      map.addControl(drawControl);
+
+      // Eventos de Dibujo de Polígonos
+      map.on(L.Draw.Event.CREATED, function (e) {
+        drawnItems.clearLayers();
+        activePolygonLayer = e.layer;
+        drawnItems.addLayer(activePolygonLayer);
+        document.getElementById('containerBorrarTrazo').classList.remove('hidden');
+        aplicarFiltros();
+      });
+
+      map.on(L.Draw.Event.DELETED, function () {
+        activePolygonLayer = null;
+        document.getElementById('containerBorrarTrazo').classList.add('hidden');
+        aplicarFiltros();
+      });
+
+      cargarBaseDatos();
     }
-  });
-</script>
+
+    async function cargarBaseDatos() {
+      actualizarBadge("Cargando...", true);
+      
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+        const response = await fetch(`${URL_CENSO}?action=obtenerTodosMapas`, {
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        const result = await response.json();
+
+        if (result && result.status === "ok" && Array.isArray(result.data) && result.data.length > 0) {
+          baseDatos = result.data;
+        } else {
+          baseDatos = MOCK_DATA;
+        }
+      } catch (error) {
+        console.warn("Conexión con endpoint fallida, usando backup demo:", error);
+        baseDatos = MOCK_DATA;
+      }
+
+      aplicarFiltros();
+    }
+
+    function actualizarBadge(texto) {
+      const txtElem = document.getElementById('textoBadge');
+      if (txtElem) txtElem.textContent = texto;
+    }
+
+    function parseFechaPeruana(strFecha) {
+      if (!strFecha) return null;
+      if (strFecha.includes('-')) {
+        const partes = strFecha.split('-');
+        if (partes[0].length === 4) return new Date(partes[0], partes[1] - 1, partes[2]);
+      }
+      const partes = strFecha.split('/');
+      if (partes.length === 3) {
+        return new Date(partes[2], partes[1] - 1, partes[0]);
+      }
+      return null;
+    }
+
+    function calcularEdad(fnStr) {
+      const fechaNac = parseFechaPeruana(fnStr);
+      if (!fechaNac) return null;
+      const hoy = new Date();
+      let edad = hoy.getFullYear() - fechaNac.getFullYear();
+      const m = hoy.getMonth() - fechaNac.getMonth();
+      if (m < 0 || (m === 0 && hoy.getDate() < fechaNac.getDate())) {
+        edad--;
+      }
+      return edad;
+    }
+
+    function obtenerGrupoEtario(edad) {
+      if (edad === null || isNaN(edad)) return 'Desconocido';
+      if (edad < 12) return 'Niño';
+      if (edad >= 12 && edad <= 17) return 'Adolescente';
+      if (edad >= 18 && edad <= 29) return 'Joven';
+      if (edad >= 30 && edad <= 59) return 'Adulto';
+      return 'Anciano';
+    }
+
+    function aplicarFiltros() {
+      const ffamiliar = document.getElementById('f_ffamiliar').value.trim().toLowerCase();
+      const sector = document.getElementById('f_sector').value.trim().toLowerCase();
+      const mz = document.getElementById('f_mz').value.trim().toLowerCase();
+      const dni = document.getElementById('f_dni').value.trim().toLowerCase();
+      const nombre = document.getElementById('f_nombre').value.trim().toLowerCase();
+
+      const fnDesdeStr = document.getElementById('f_fn_desde').value;
+      const fnHastaStr = document.getElementById('f_fn_hasta').value;
+
+      const dateDesde = fnDesdeStr ? new Date(fnDesdeStr) : null;
+      const dateHasta = fnHastaStr ? new Date(fnHastaStr) : null;
+
+      markersLayer.clearLayers();
+
+      // Preparar Polígono para Turf.js si existe un dibujo activo
+      let turfPolygon = null;
+      if (activePolygonLayer) {
+        const geojson = activePolygonLayer.toGeoJSON();
+        turfPolygon = geojson.geometry;
+      }
+
+      // Conteo Demográfico
+      const stats = { ninos: 0, adolescentes: 0, jovenes: 0, adultos: 0, ancianos: 0, total: 0 };
+
+      const filtrados = baseDatos.filter(item => {
+        if (ffamiliar && (!item.ffamiliar || !item.ffamiliar.toString().toLowerCase().includes(ffamiliar))) return false;
+        if (sector && (!item.sector || !item.sector.toString().toLowerCase().includes(sector))) return false;
+        
+        // REGLA SOLICITADA: BÚSQUEDA EXACTA DE MANZANA (MZ)
+        if (mz) {
+          const itemMz = item.mz ? item.mz.toString().trim().toLowerCase() : "";
+          if (itemMz !== mz) return false;
+        }
+
+        if (dni && (!item.dni || !item.dni.toString().toLowerCase().includes(dni))) return false;
+        if (nombre && (!item.nombreB || !item.nombreB.toString().toLowerCase().includes(nombre))) return false;
+
+        if (dateDesde || dateHasta) {
+          const fnFecha = parseFechaPeruana(item.fn);
+          if (!fnFecha) return false;
+          if (dateDesde && fnFecha < dateDesde) return false;
+          if (dateHasta && fnFecha > dateHasta) return false;
+        }
+
+        // REGLA SOLICITADA: FILTRO POR DIBUJO EN EL MAPA (POLÍGONO/TRAZO)
+        if (turfPolygon && item.georeferencia) {
+          const coords = item.georeferencia.split(',');
+          if (coords.length === 2) {
+            const lat = parseFloat(coords[0].trim());
+            const lng = parseFloat(coords[1].trim());
+            if (!isNaN(lat) && !isNaN(lng)) {
+              const pt = turf.point([lng, lat]); // Turf usa [lng, lat]
+              const inside = turf.booleanPointInPolygon(pt, turfPolygon);
+              if (!inside) return false;
+            } else {
+              return false;
+            }
+          } else {
+            return false;
+          }
+        }
+
+        // Acumular estadísticas
+        const edad = calcularEdad(item.fn);
+        const grupo = obtenerGrupoEtario(edad);
+        if (grupo === 'Niño') stats.ninos++;
+        else if (grupo === 'Adolescente') stats.adolescentes++;
+        else if (grupo === 'Joven') stats.jovenes++;
+        else if (grupo === 'Adulto') stats.adultos++;
+        else if (grupo === 'Anciano') stats.ancianos++;
+        stats.total++;
+
+        return true;
+      });
+
+      // Actualizar Widget Estadístico Lateral
+      document.getElementById('statNinos').textContent = stats.ninos;
+      document.getElementById('statAdolescentes').textContent = stats.adolescentes;
+      document.getElementById('statJovenes').textContent = stats.jovenes;
+      document.getElementById('statAdultos').textContent = stats.adultos;
+      document.getElementById('statAncianos').textContent = stats.ancianos;
+      document.getElementById('statTotal').textContent = `${stats.total} pers.`;
+
+      actualizarBadge(`${filtrados.length} Persona(s) Encontrada(s)`);
+
+      const gruposCoordenadas = {};
+
+      filtrados.forEach(item => {
+        if (!item.georeferencia) return;
+        const coords = item.georeferencia.split(',');
+        if (coords.length === 2) {
+          const lat = parseFloat(coords[0].trim());
+          const lng = parseFloat(coords[1].trim());
+
+          if (!isNaN(lat) && !isNaN(lng)) {
+            const key = `${lat.toFixed(6)},${lng.toFixed(6)}`;
+            if (!gruposCoordenadas[key]) {
+              gruposCoordenadas[key] = { lat, lng, ffamiliar: item.ffamiliar, integrantes: [] };
+            }
+            gruposCoordenadas[key].integrantes.push(item);
+          }
+        }
+      });
+
+      const bounds = [];
+
+      Object.values(gruposCoordenadas).forEach(grupo => {
+        bounds.push([grupo.lat, grupo.lng]);
+
+        // Estadísticas de esta familia específica
+        const famStats = { ninos: 0, adolescentes: 0, jovenes: 0, adultos: 0, ancianos: 0 };
+        grupo.integrantes.forEach(i => {
+          const ed = calcularEdad(i.fn);
+          const grp = obtenerGrupoEtario(ed);
+          if (grp === 'Niño') famStats.ninos++;
+          else if (grp === 'Adolescente') famStats.adolescentes++;
+          else if (grp === 'Joven') famStats.jovenes++;
+          else if (grp === 'Adulto') famStats.adultos++;
+          else if (grp === 'Anciano') famStats.ancianos++;
+        });
+
+        let popupContent = `
+          <div class="font-sans w-80 text-xs">
+            <!-- CABECERA DE LA FICHA -->
+            <div class="bg-blue-900 text-white p-3 font-bold flex justify-between items-center shadow-md">
+              <div class="flex items-center gap-1.5">
+                <i data-lucide="home" class="w-4 h-4 text-emerald-400"></i>
+                <span>Ficha: ${grupo.ffamiliar || 'S/N'}</span>
+              </div>
+              <span class="text-[10px] bg-blue-950 px-2 py-0.5 rounded-full text-emerald-300 border border-emerald-500/30 font-semibold">
+                ${grupo.integrantes.length} integrante(s)
+              </span>
+            </div>
+            
+            <div class="p-3 bg-white space-y-2.5">
+              <!-- DIRECCIÓN Y SECTOR -->
+              <div class="bg-slate-50 p-2 rounded-lg border border-slate-200">
+                <p class="text-[11px] font-semibold text-slate-700 leading-snug">
+                  <strong class="text-blue-900 uppercase">Sector:</strong> ${grupo.integrantes[0].sector || '-'}
+                </p>
+                <p class="text-[11px] font-semibold text-slate-700 leading-snug">
+                  <strong class="text-blue-900 uppercase">Ref / Mz:</strong> ${grupo.integrantes[0].ref_direccion || '-'} (Mz ${grupo.integrantes[0].mz || '-'})
+                </p>
+              </div>
+
+              <!-- RESUMEN DEMOGRÁFICO DE LA FAMILIA -->
+              <div class="bg-blue-50/70 p-2 rounded-lg border border-blue-100 flex justify-between text-[10px] text-blue-950 font-bold">
+                <span>🚸 Niños: ${famStats.ninos}</span>
+                <span>🎒 Adolesc: ${famStats.adolescentes}</span>
+                <span>🎓 Jóvenes: ${famStats.jovenes}</span>
+                <span>💼 Adultos: ${famStats.adultos}</span>
+                <span>👵 Ancianos: ${famStats.ancianos}</span>
+              </div>
+
+              <!-- LISTA DE INTEGRANTES CON WHATSAPP Y LLAMADAS -->
+              <div class="border-t border-slate-100 pt-2 space-y-2 max-h-52 overflow-y-auto custom-scrollbar pr-1">
+        `;
+
+        grupo.integrantes.forEach((ing, idx) => {
+          const edadIng = calcularEdad(ing.fn);
+          const grupoEtario = obtenerGrupoEtario(edadIng);
+          const telSanitized = ing.telefono ? ing.telefono.toString().replace(/\D/g, '') : '';
+
+          popupContent += `
+            <div class="bg-slate-50 hover:bg-blue-50/50 transition p-2 rounded-lg border border-slate-200 text-[11px] space-y-1">
+              <div class="flex items-center justify-between font-bold text-blue-950">
+                <span class="uppercase truncate max-w-[180px]">${ing.nombreB || 'SIN NOMBRE'}</span>
+                <span class="text-[9px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded">${grupoEtario} (${edadIng !== null ? edadIng + 'a' : '-'})</span>
+              </div>
+
+              <div class="grid grid-cols-2 gap-x-1 text-[10px] text-slate-600">
+                <p><strong>DNI:</strong> ${ing.dni || '-'}</p>
+                <p><strong>F.Nac:</strong> ${ing.fn || '-'}</p>
+                <p><strong>HC:</strong> ${ing.hclinica || '-'}</p>
+                <p><strong>Tel:</strong> ${ing.telefono || '-'}</p>
+              </div>
+
+              <!-- ACCIONES WHATSAPP Y LLAMADA DIRECTA -->
+              ${telSanitized.length >= 9 ? `
+                <div class="flex items-center gap-1.5 pt-1 border-t border-slate-200/60 mt-1">
+                  <a href="https://wa.me/51${telSanitized}?text=Estimado(a)%20${encodeURIComponent(ing.nombreB || '')}%20le%20escribimos%20del%20sistema%20SIGIS_FED" 
+                    target="_blank" rel="noopener noreferrer"
+                    class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold py-1 px-2 rounded-md flex items-center justify-center gap-1 transition">
+                    <i data-lucide="message-circle" class="w-3 h-3"></i> WhatsApp
+                  </a>
+                  <a href="tel:${telSanitized}" 
+                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold py-1 px-2 rounded-md flex items-center justify-center gap-1 transition">
+                    <i data-lucide="phone" class="w-3 h-3"></i> Llamar
+                  </a>
+                </div>
+              ` : `
+                <span class="text-[9px] text-slate-400 italic block">Sin número registrado</span>
+              `}
+            </div>
+          `;
+        });
+
+        popupContent += `
+              </div>
+            </div>
+          </div>
+        `;
+
+        const marker = L.marker([grupo.lat, grupo.lng]).bindPopup(popupContent);
+        marker.on('click', () => {
+          setTimeout(() => lucide.createIcons(), 50);
+        });
+        markersLayer.addLayer(marker);
+      });
+
+      if (bounds.length > 0) {
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+      }
+    }
+
+    function abrirModalSector() {
+      renderizarListaModalSector(sectoresMaster);
+      document.getElementById('modalSector').classList.remove('hidden');
+      setTimeout(() => document.getElementById('inputBuscarSectorModal').focus(), 100);
+    }
+
+    function cerrarModalSector() {
+      document.getElementById('modalSector').classList.add('hidden');
+      document.getElementById('inputBuscarSectorModal').value = "";
+    }
+
+    function renderizarListaModalSector(lista) {
+      const cont = document.getElementById('listaSectoresModal');
+      cont.innerHTML = "";
+
+      if (lista.length === 0) {
+        cont.innerHTML = `<div class="p-4 text-center text-xs text-slate-400">No se encontraron sectores</div>`;
+        return;
+      }
+
+      lista.forEach(sec => {
+        const item = document.createElement('div');
+        item.className = "p-3 hover:bg-indigo-50/80 cursor-pointer transition flex justify-between items-center text-xs font-semibold text-slate-700 rounded-lg";
+        item.innerHTML = `
+          <span>${sec}</span>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-indigo-400"></i>
+        `;
+        item.onclick = () => {
+          document.getElementById('f_sector').value = sec;
+          cerrarModalSector();
+          aplicarFiltros();
+        };
+        cont.appendChild(item);
+      });
+      lucide.createIcons();
+    }
+
+    function filtrarListaModalSector() {
+      const query = document.getElementById('inputBuscarSectorModal').value.toLowerCase().trim();
+      const filtrados = sectoresMaster.filter(s => s.toLowerCase().includes(query));
+      renderizarListaModalSector(filtrados);
+    }
+
+    function limpiarFiltros() {
+      document.getElementById('f_ffamiliar').value = "";
+      document.getElementById('f_sector').value = "";
+      document.getElementById('f_mz').value = "";
+      document.getElementById('f_dni').value = "";
+      document.getElementById('f_nombre').value = "";
+      document.getElementById('f_fn_desde').value = "";
+      document.getElementById('f_fn_hasta').value = "";
+      limpiarDibujoMapa();
+      aplicarFiltros();
+    }
+
+    function limpiarDibujoMapa() {
+      drawnItems.clearLayers();
+      activePolygonLayer = null;
+      document.getElementById('containerBorrarTrazo').classList.add('hidden');
+      aplicarFiltros();
+    }
+
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('sidebarFiltros');
+      sidebar.classList.toggle('hidden');
+    }
+
+    window.onload = initMap;
+  </script>
 </body>
 </html>
