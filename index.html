@@ -17,6 +17,9 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 
+  <!-- Librería SheetJS para Exportar a Excel verdadero (.xlsx) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
   <style>
     #map { height: calc(100vh - 60px); width: 100%; z-index: 1; }
     .loader {
@@ -49,11 +52,13 @@
     .draw-tooltip::before {
       border-top-color: rgba(15, 23, 42, 0.9);
     }
-    /* Estilos de impresión para PDF / Reportes */
-    @media print {
-      body * { visibility: hidden; }
-      #areaImpresion, #areaImpresion * { visibility: visible; }
-      #areaImpresion { position: absolute; left: 0; top: 0; width: 100%; }
+    @keyframes pulseGps {
+      0% { transform: scale(0.9); opacity: 0.8; }
+      50% { transform: scale(1.3); opacity: 0.3; }
+      100% { transform: scale(0.9); opacity: 0.8; }
+    }
+    .gps-pulse-ring {
+      animation: pulseGps 1.8s infinite ease-in-out;
     }
   </style>
 </head>
@@ -172,17 +177,12 @@
         </div>
       </div>
 
-      <!-- BOTONES DE EXPORTACIÓN Y REPORTES -->
+      <!-- BOTÓN DE EXPORTACIÓN A EXCEL (.XLSX) -->
       <div class="bg-blue-50/80 p-2.5 rounded-lg border border-blue-200 space-y-1.5">
-        <span class="block text-[10px] font-bold text-blue-900 uppercase">Exportar Reportes Filtrados:</span>
-        <div class="flex gap-1.5">
-          <button onclick="exportarExcelCSV()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold py-1.5 rounded transition flex items-center justify-center gap-1">
-            <i data-lucide="file-spread-sheet" class="w-3.5 h-3.5"></i> Excel / CSV
-          </button>
-          <button onclick="generarReporteImpresionPDF()" class="flex-1 bg-blue-700 hover:bg-blue-800 text-white text-[10px] font-bold py-1.5 rounded transition flex items-center justify-center gap-1">
-            <i data-lucide="printer" class="w-3.5 h-3.5"></i> Imprimir / PDF
-          </button>
-        </div>
+        <span class="block text-[10px] font-bold text-blue-900 uppercase">Exportar Datos Filtrados:</span>
+        <button onclick="exportarExcelDirecto()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 rounded transition flex items-center justify-center gap-1.5 shadow">
+          <i data-lucide="file-spread-sheet" class="w-4 h-4"></i> Exportar a Excel (.xlsx)
+        </button>
       </div>
 
       <!-- MÓDULO DE MONITOREO ESPECIAL -->
@@ -195,7 +195,7 @@
         <div>
           <label for="f_tipo_monitoreo" class="block text-[10px] font-bold text-amber-800 uppercase mb-0.5">Tipo de Consulta:</label>
           <select id="f_tipo_monitoreo" onchange="cambiarTipoMonitoreo()" class="w-full px-2 py-1.5 border border-amber-300 rounded text-xs font-bold text-slate-700 bg-white outline-none focus:ring-2 focus:ring-amber-500">
-            <option value="">-- Sin Monitoreo Activo --</option>
+            <option value="">-- Todos los Registros (Vista Global) --</option>
             <option value="InaCRED">Inasistente CRED (InaCRED)</option>
             <option value="InaAnemia">Inasistente Anemia (InaAnemia)</option>
             <option value="InaVAC">Vacunas Pendientes (InaVAC)</option>
@@ -204,7 +204,6 @@
             <option value="PAT">Pacientes TBC (PAT)</option>
             <option value="HTA">Hipertensos (HTA)</option>
             <option value="DM">Diabéticos (DM)</option>
-            <option value="Dengue">Dengue</option>
           </select>
         </div>
 
@@ -247,7 +246,7 @@
         </div>
       </div>
 
-      <!-- FILTRO MANZANA (MZ) - COINCIDENCIA EXACTA Y MÚLTIPLE SEPARADA POR COMAS -->
+      <!-- FILTRO MANZANA (MZ) -->
       <div>
         <label for="f_mz" class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Manzana (Mz) [Separar por comas]</label>
         <input type="text" id="f_mz" placeholder="Ej: 5, 12, A" oninput="aplicarFiltros()"
@@ -328,7 +327,7 @@
       <div id="map"></div>
 
       <!-- BOTÓN FLOTANTE MI UBICACIÓN ACTUAL -->
-      <button onclick="obtenerUbicacionGPS()" title="Mi Ubicación Actual" class="absolute bottom-6 right-4 z-20 bg-white hover:bg-slate-100 text-slate-800 p-2.5 rounded-full shadow-2xl border border-slate-300 transition flex items-center justify-center">
+      <button onclick="centrarEnUbicacionGPS()" title="Centrar en Mi Ubicación GPS" class="absolute bottom-6 right-4 z-20 bg-white hover:bg-slate-100 text-slate-800 p-2.5 rounded-full shadow-2xl border border-slate-300 transition flex items-center justify-center">
         <i data-lucide="crosshair" class="w-6 h-6 text-blue-600"></i>
       </button>
     </main>
@@ -370,36 +369,6 @@
     </div>
   </div>
 
-  <!-- ÁREA OCULTA PARA IMPRESIÓN Y GENERACIÓN DE PDF -->
-  <div id="areaImpresion" class="hidden p-6 font-sans">
-    <div class="border-b-2 border-blue-800 pb-3 mb-4 flex justify-between items-center">
-      <div>
-        <h1 class="text-xl font-bold text-blue-900">SIGIS_FED - Reporte Consolidado de Campo</h1>
-        <p class="text-xs text-slate-600" id="impFechaReporte">Fecha de Emisión: -</p>
-      </div>
-      <div class="text-right">
-        <span id="impTotalPersonas" class="text-sm font-bold bg-blue-100 text-blue-900 px-3 py-1 rounded">0 Personas</span>
-      </div>
-    </div>
-    <table class="w-full border-collapse text-xs">
-      <thead>
-        <tr class="bg-blue-800 text-white">
-          <th class="p-2 border">#</th>
-          <th class="p-2 border">Ficha</th>
-          <th class="p-2 border">Apellidos y Nombres</th>
-          <th class="p-2 border">DNI</th>
-          <th class="p-2 border">Edad</th>
-          <th class="p-2 border">Sector / Mz</th>
-          <th class="p-2 border">Teléfono</th>
-          <th class="p-2 border">Monitoreo / Condición</th>
-        </tr>
-      </thead>
-      <tbody id="impTablaCuerpo">
-        <!-- Filas dinámicas -->
-      </tbody>
-    </table>
-  </div>
-
   <script>
     lucide.createIcons();
 
@@ -413,6 +382,7 @@
     let markersLayer = L.layerGroup();
     let drawnItems = new L.FeatureGroup();
     let userGpsMarker = null;
+    let userCurrentCoords = null;
     let sectoresSeleccionados = new Set();
     let filtroEtarioActivo = null;
 
@@ -433,9 +403,47 @@
       });
     }
 
+    // ICONO GUINDA ESPECIAL PARA GESTANTES
+    function crearIconoGestanteGuinda() {
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#800020" width="34" height="34" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+          <circle cx="12" cy="8" r="2.5" fill="#ffffff"/>
+          <path d="M10.5 12.5c.8-.5 1.7-.5 2.5 0 .8.5 1.5 1.5 1 2.5-.5 1-2 1.5-2 1.5s-1.5-.5-2-1.5c-.5-1 .2-2 1-2.5Z" fill="#ffffff"/>
+        </svg>
+      `;
+      return L.divIcon({
+        html: svg,
+        className: "",
+        iconSize: [34, 34],
+        iconAnchor: [17, 34],
+        popupAnchor: [0, -30]
+      });
+    }
+
+    // ICONO CRUZ EN TIEMPO REAL PARA GPS CON HALO PULSANTE
+    function crearIconoCruzGPS() {
+      const svg = `
+        <div style="position:relative; width:32px; height:32px; display:flex; align-items:center; justify-content:center;">
+          <div class="gps-pulse-ring" style="position:absolute; width:28px; height:28px; border-radius:50%; background:rgba(37,99,235,0.35);"></div>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="28" height="28">
+            <circle cx="12" cy="12" r="9" fill="#ffffff" fill-opacity="0.85"/>
+            <line x1="12" y1="2" x2="12" y2="22"/>
+            <line x1="2" y1="12" x2="22" y2="12"/>
+          </svg>
+        </div>
+      `;
+      return L.divIcon({
+        html: svg,
+        className: "",
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+      });
+    }
+
     const iconosRiesgo = {
       rojo: crearIconoColor('#ef4444'),    // Anemia, Inasistentes, Vacunas
-      morado: crearIconoColor('#a855f7'),  // Gestantes
+      guinda: crearIconoGestanteGuinda(),  // Gestantes
       amarillo: crearIconoColor('#f59e0b'),// Crónicos / Alerta
       azul: crearIconoColor('#2563eb')     // Estándar
     };
@@ -559,6 +567,42 @@
       }
     }
 
+    // CARGA INICIAL COMPLETA DE TODAS LAS HOJAS DE MONITOREO
+    async function cargarMonitoreoInicialCompleto() {
+      const pestañasMonitoreo = ["Gestante", "AnemiaInfantil", "InaCRED", "InaAnemia", "InaVAC", "HTA", "DM", "PAT"];
+      
+      for (const hoja of pestañasMonitoreo) {
+        // Intentar recuperar de LocalStorage primero
+        const localMon = localStorage.getItem(`SIGIS_MON_${hoja}`);
+        if (localMon) {
+          baseMonitoreo[hoja] = JSON.parse(localMon);
+        }
+      }
+
+      aplicarFiltros();
+
+      // Petición progresiva a Google Apps Script para refrescar
+      for (const hoja of pestañasMonitoreo) {
+        try {
+          const response = await fetch(`${URL_MONITOREO}?action=obtenerMonitoreo&hoja=${encodeURIComponent(hoja)}`);
+          const result = await response.json();
+          if (result && result.status === "ok") {
+            baseMonitoreo[hoja] = {};
+            (result.data || []).forEach(row => {
+              const dniStr = row.dni ? row.dni.toString().trim() : "";
+              if (dniStr) {
+                baseMonitoreo[hoja][dniStr] = { valB: row.valB || "", valC: row.valC || "" };
+              }
+            });
+            try { localStorage.setItem(`SIGIS_MON_${hoja}`, JSON.stringify(baseMonitoreo[hoja])); } catch(e){}
+          }
+        } catch(e) {
+          console.log(`Carga diferida ${hoja}:`, e);
+        }
+      }
+      aplicarFiltros();
+    }
+
     async function cargarMonitoreoHoja(hojaNombre) {
       if (baseMonitoreo[hojaNombre]) {
         aplicarFiltros();
@@ -580,7 +624,6 @@
               };
             }
           });
-          // Guardar en LocalStorage
           try { localStorage.setItem(`SIGIS_MON_${hojaNombre}`, JSON.stringify(baseMonitoreo[hojaNombre])); } catch(e){}
           aplicarFiltros();
         } else {
@@ -589,7 +632,6 @@
         }
       } catch (e) {
         console.error(`Error al cargar monitoreo ${hojaNombre}:`, e);
-        // Recuperar desde LocalStorage si falla la red
         const localMon = localStorage.getItem(`SIGIS_MON_${hojaNombre}`);
         if (localMon) baseMonitoreo[hojaNombre] = JSON.parse(localMon);
         else baseMonitoreo[hojaNombre] = {};
@@ -679,6 +721,8 @@
 
       initModalSectores();
       cargarBaseDatos();
+      iniciarSeguimientoGPSContinuo(); // Activa rastreo GPS continuo con cruz
+      cargarMonitoreoInicialCompleto();
     }
 
     async function cargarBaseDatos() {
@@ -696,7 +740,6 @@
         }
       } catch (error) {
         console.error("Error al cargar mapa:", error);
-        // Recuperar LocalStorage si está sin conexión
         const localData = localStorage.getItem('SIGIS_BASE_DATOS');
         if (localData) {
           baseDatos = JSON.parse(localData);
@@ -774,30 +817,39 @@
       return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
     }
 
-    function obtenerUbicacionGPS() {
-      if (!navigator.geolocation) {
-        alert("La geolocalización no es soportada por este navegador.");
-        return;
-      }
-      navigator.geolocation.getCurrentPosition(position => {
+    // SEGUIMIENTO GPS EN TIEMPO REAL CONTINUO
+    function iniciarSeguimientoGPSContinuo() {
+      if (!navigator.geolocation) return;
+
+      navigator.geolocation.watchPosition(position => {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
+        userCurrentCoords = [lat, lng];
 
-        if (userGpsMarker) map.removeLayer(userGpsMarker);
-
-        userGpsMarker = L.circleMarker([lat, lng], {
-          radius: 9,
-          fillColor: "#3b82f6",
-          color: "#ffffff",
-          weight: 3,
-          opacity: 1,
-          fillOpacity: 0.9
-        }).addTo(map).bindPopup("<b>📍 Tu Ubicación Actual</b>").openPopup();
-
-        map.setView([lat, lng], 16);
+        if (userGpsMarker) {
+          userGpsMarker.setLatLng([lat, lng]);
+        } else {
+          userGpsMarker = L.marker([lat, lng], {
+            icon: crearIconoCruzGPS(),
+            zIndexOffset: 2000
+          }).addTo(map).bindPopup("<b>📍 Tu Ubicación Actual (En movimiento)</b>");
+        }
       }, err => {
-        alert("Error al obtener la ubicación GPS.");
-      }, { enableHighAccuracy: true });
+        console.log("Aviso GPS:", err.message);
+      }, {
+        enableHighAccuracy: true,
+        maximumAge: 5000,
+        timeout: 10000
+      });
+    }
+
+    function centrarEnUbicacionGPS() {
+      if (userCurrentCoords) {
+        map.setView(userCurrentCoords, 17);
+        if (userGpsMarker) userGpsMarker.openPopup();
+      } else {
+        alert("Obteniendo señal GPS... Asegúrate de permitir el acceso a la ubicación.");
+      }
     }
 
     function actualizarInfoEdad() {
@@ -837,80 +889,67 @@
       return mzStr.toString().toLowerCase().replace(/mz|\.|\s/g, '').trim();
     }
 
-    // EXPORTAR TABLA A CSV / EXCEL
-    function exportarExcelCSV() {
+    // OBTENER RESUMEN COMPLETO DE MONITOREO DE UNA PERSONA
+    function obtenerResumenMonitoreoPersona(dniStr) {
+      if (!dniStr) return "";
+      let hallazgos = [];
+
+      Object.keys(baseMonitoreo).forEach(hojaKey => {
+        const datosH = baseMonitoreo[hojaKey];
+        if (datosH && datosH[dniStr]) {
+          const valB = datosH[dniStr].valB || "";
+          if (hojaKey === "InaVAC") hallazgos.push(`Vacuna Pendiente: ${valB}`);
+          else if (hojaKey === "InaCRED") hallazgos.push(`InaCRED: ${valB}`);
+          else if (hojaKey === "InaAnemia") hallazgos.push(`InaAnemia: ${valB}`);
+          else if (hojaKey === "Gestante") hallazgos.push(`Gestante FPP: ${valB}`);
+          else if (hojaKey === "AnemiaInfantil") hallazgos.push(`Niño Anémico (Alta: ${sumarMesesAFecha(valB, 7)})`);
+          else hallazgos.push(`${hojaKey}: ${valB || 'Registrado'}`);
+        }
+      });
+
+      return hallazgos.join(" | ");
+    }
+
+    // EXPORTAR A EXCEL DIRECTO (.XLSX) USANDO SHEETJS
+    function exportarExcelDirecto() {
       if (!ultimosFiltradosGlobal || ultimosFiltradosGlobal.length === 0) {
         alert("No hay registros filtrados para exportar.");
         return;
       }
 
-      let csvContent = "\uFEFF"; // BOM para acentos en Excel
-      csvContent += "Ficha Familiar,Apellidos y Nombres,DNI,Fecha Nac,Edad,HC,Telefono,Sector,Manzana,Direccion,Georeferencia\n";
+      const datosExcel = ultimosFiltradosGlobal.map((p, idx) => {
+        const dniStr = p.dni ? p.dni.toString().trim() : '';
+        const resumenMon = obtenerResumenMonitoreoPersona(dniStr);
 
-      ultimosFiltradosGlobal.forEach(p => {
-        const edad = calcularEdad(p.fn) || '';
-        const ff = `"${p.ffamiliar || ''}"`;
-        const nom = `"${p.nombreB || ''}"`;
-        const dni = `"${p.dni || ''}"`;
-        const fn = `"${p.fn || ''}"`;
-        const hc = `"${p.hclinica || ''}"`;
-        const tel = `"${p.telefono || ''}"`;
-        const sec = `"${p.sector || ''}"`;
-        const mz = `"${p.mz || ''}"`;
-        const dir = `"${p.ref_direccion || ''}"`;
-        const geo = `"${p.georeferencia || ''}"`;
-
-        csvContent += `${ff},${nom},${dni},${fn},${edad},${hc},${tel},${sec},${mz},${dir},${geo}\n`;
+        return {
+          "Item": idx + 1,
+          "Ficha Familiar": p.ffamiliar || 'S/N',
+          "Apellidos y Nombres": p.nombreB || '',
+          "DNI": p.dni || '',
+          "Fecha Nacimiento": p.fn || '',
+          "Edad Detallada": obtenerTextoEdadDetallada(p.fn),
+          "Historia Clínica": p.hclinica || '',
+          "Teléfono": p.telefono || '',
+          "Sector": p.sector || '',
+          "Manzana": p.mz || '',
+          "Referencia / Dirección": p.ref_direccion || '',
+          "Condición / Monitoreo": resumenMon || 'Sin Alerta Registrada',
+          "Georreferencia": p.georeferencia || ''
+        };
       });
 
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
-      link.setAttribute("download", `Reporte_SIGIS_FED_${new Date().toISOString().slice(0,10)}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
+      const worksheet = XLSX.utils.json_to_sheet(datosExcel);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Monitoreo_SIGIS_FED");
 
-    // GENERAR REPORTE DE IMPRESIÓN / PDF
-    function generarReporteImpresionPDF() {
-      if (!ultimosFiltradosGlobal || ultimosFiltradosGlobal.length === 0) {
-        alert("No hay registros filtrados para imprimir.");
-        return;
-      }
+      const maxAnchos = [
+        { wch: 6 }, { wch: 15 }, { wch: 35 }, { wch: 12 },
+        { wch: 15 }, { wch: 25 }, { wch: 15 }, { wch: 15 },
+        { wch: 30 }, { wch: 10 }, { wch: 35 }, { wch: 45 }, { wch: 25 }
+      ];
+      worksheet['!cols'] = maxAnchos;
 
-      const tbody = document.getElementById('impTablaCuerpo');
-      tbody.innerHTML = "";
-      document.getElementById('impFechaReporte').textContent = `Fecha de Emisión: ${new Date().toLocaleDateString('es-PE')} ${new Date().toLocaleTimeString('es-PE')}`;
-      document.getElementById('impTotalPersonas').textContent = `${ultimosFiltradosGlobal.length} Personas`;
-
-      const tipoMon = document.getElementById('f_tipo_monitoreo').value;
-
-      ultimosFiltradosGlobal.forEach((item, index) => {
-        const tr = document.createElement('tr');
-        tr.className = index % 2 === 0 ? "bg-white" : "bg-slate-50";
-
-        const ingDni = item.dni ? item.dni.toString().trim() : '';
-        let monInfo = "-";
-        if (tipoMon && baseMonitoreo[tipoMon] && baseMonitoreo[tipoMon][ingDni]) {
-          monInfo = `${tipoMon}: ${baseMonitoreo[tipoMon][ingDni].valB || 'Si'}`;
-        }
-
-        tr.innerHTML = `
-          <td class="p-2 border text-center">${index + 1}</td>
-          <td class="p-2 border font-bold">${item.ffamiliar || 'S/N'}</td>
-          <td class="p-2 border uppercase">${item.nombreB || '-'}</td>
-          <td class="p-2 border font-mono">${item.dni || '-'}</td>
-          <td class="p-2 border">${obtenerTextoEdadDetallada(item.fn)}</td>
-          <td class="p-2 border">${item.sector || '-'} (Mz ${item.mz || '-'})</td>
-          <td class="p-2 border font-mono">${item.telefono || '-'}</td>
-          <td class="p-2 border font-bold text-blue-900">${monInfo}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      window.print();
+      XLSX.writeFile(workbook, `SIGIS_FED_Monitoreo_${new Date().toISOString().slice(0,10)}.xlsx`);
     }
 
     // Filtrar y Renderizar los marcadores
@@ -977,7 +1016,7 @@
         if (arrayMzInput.length > 0) {
           const itemMz = normalizarMz(item.mz);
           const coincideMz = arrayMzInput.some(m => itemMz === m);
-          if (!coincideMz) return false;
+          if (!coincideSector) return false;
         }
 
         if (dni && (!item.dni || !item.dni.toString().toLowerCase().includes(dni))) return false;
@@ -1064,17 +1103,20 @@
           }
 
           const ingDni = ing.dni ? ing.dni.toString().trim() : '';
-          if (tipoMon && baseMonitoreo[tipoMon] && baseMonitoreo[tipoMon][ingDni]) {
-            if (["AnemiaInfantil", "InaCRED", "InaAnemia", "InaVAC"].includes(tipoMon)) grupoTieneRiesgoAlto = true;
-            if (tipoMon === "Gestante") grupoTieneGestante = true;
-            if (["HTA", "DM", "PAT"].includes(tipoMon)) grupoTieneCronico = true;
-          }
+
+          if (baseMonitoreo["Gestante"] && baseMonitoreo["Gestante"][ingDni]) grupoTieneGestante = true;
+          if (baseMonitoreo["AnemiaInfantil"] && baseMonitoreo["AnemiaInfantil"][ingDni]) grupoTieneRiesgoAlto = true;
+          if (baseMonitoreo["InaCRED"] && baseMonitoreo["InaCRED"][ingDni]) grupoTieneRiesgoAlto = true;
+          if (baseMonitoreo["InaAnemia"] && baseMonitoreo["InaAnemia"][ingDni]) grupoTieneRiesgoAlto = true;
+          if (baseMonitoreo["InaVAC"] && baseMonitoreo["InaVAC"][ingDni]) grupoTieneRiesgoAlto = true;
+          if (baseMonitoreo["HTA"] && baseMonitoreo["HTA"][ingDni]) grupoTieneCronico = true;
+          if (baseMonitoreo["DM"] && baseMonitoreo["DM"][ingDni]) grupoTieneCronico = true;
+          if (baseMonitoreo["PAT"] && baseMonitoreo["PAT"][ingDni]) grupoTieneCronico = true;
         });
 
-        // Determinar icono por color según riesgo
         let iconoAUsar = iconosRiesgo.azul;
-        if (grupoTieneRiesgoAlto) iconoAUsar = iconosRiesgo.rojo;
-        else if (grupoTieneGestante) iconoAUsar = iconosRiesgo.morado;
+        if (grupoTieneGestante) iconoAUsar = iconosRiesgo.guinda;
+        else if (grupoTieneRiesgoAlto) iconoAUsar = iconosRiesgo.rojo;
         else if (grupoTieneCronico) iconoAUsar = iconosRiesgo.amarillo;
 
         const urlGoogleMaps = `https://www.google.com/maps/dir/?api=1&destination=${grupo.lat},${grupo.lng}`;
@@ -1115,29 +1157,32 @@
           const tel = ing.telefono ? ing.telefono.toString().trim() : '';
           const ingDni = ing.dni ? ing.dni.toString().trim() : '';
 
+          const resumenMon = obtenerResumenMonitoreoPersona(ingDni);
           let htmlMonitoreoInfo = "";
           let htmlAlertaUrgente = "";
 
-          if (tipoMon && baseMonitoreo[tipoMon] && baseMonitoreo[tipoMon][ingDni]) {
-            const regM = baseMonitoreo[tipoMon][ingDni];
-            if (tipoMon === "AnemiaInfantil") {
-              const fechaAlta = sumarMesesAFecha(regM.valB, 7);
-              const diasFaltantes = diasHastaFecha(fechaAlta);
-              if (diasFaltantes !== null && diasFaltantes <= 30 && diasFaltantes >= 0) {
-                htmlAlertaUrgente = `<p class="text-[10px] bg-red-600 text-white font-extrabold p-1 rounded shadow animate-pulse">⚡ ALERTA: Alta Próxima (${diasFaltantes} días)</p>`;
+          if (resumenMon) {
+            if (resumenMon.includes("Gestante FPP")) {
+              const regM = baseMonitoreo["Gestante"][ingDni];
+              if (regM) {
+                const diasFPP = diasHastaFecha(regM.valB);
+                if (diasFPP !== null && diasFPP <= 30 && diasFPP >= 0) {
+                  htmlAlertaUrgente = `<p class="text-[10px] bg-purple-600 text-white font-extrabold p-1 rounded shadow animate-pulse">🤰 ALERTA: PARTO PRÓXIMO (${diasFPP} días)</p>`;
+                }
               }
-              htmlMonitoreoInfo = `<p class="text-[10px] bg-red-100 text-red-800 p-1 rounded font-bold mt-1">🔴 Anemia Inicio: ${regM.valB || '-'} | Alta (+7m): ${fechaAlta}</p>`;
-            } else if (tipoMon === "InaVAC") {
-              htmlMonitoreoInfo = `<p class="text-[10px] bg-amber-100 text-amber-900 p-1 rounded font-bold mt-1">💉 Vacuna Pendiente: ${regM.valB || '-'}</p>`;
-            } else if (tipoMon === "Gestante") {
-              const diasFPP = diasHastaFecha(regM.valB);
-              if (diasFPP !== null && diasFPP <= 30 && diasFPP >= 0) {
-                htmlAlertaUrgente = `<p class="text-[10px] bg-purple-600 text-white font-extrabold p-1 rounded shadow animate-pulse">🤰 ALERTA: PARTO PRÓXIMO (${diasFPP} días)</p>`;
-              }
-              htmlMonitoreoInfo = `<p class="text-[10px] bg-purple-100 text-purple-900 p-1 rounded font-bold mt-1">🤰 Gestante FPP: ${regM.valB || '-'}</p>`;
-            } else {
-              htmlMonitoreoInfo = `<p class="text-[10px] bg-amber-100 text-amber-900 p-1 rounded font-bold mt-1">⚠️ ${tipoMon}: ${regM.valB || 'Registrado'}</p>`;
             }
+            if (resumenMon.includes("Niño Anémico")) {
+              const regM = baseMonitoreo["AnemiaInfantil"][ingDni];
+              if (regM) {
+                const fechaAlta = sumarMesesAFecha(regM.valB, 7);
+                const diasFaltantes = diasHastaFecha(fechaAlta);
+                if (diasFaltantes !== null && diasFaltantes <= 30 && diasFaltantes >= 0) {
+                  htmlAlertaUrgente = `<p class="text-[10px] bg-red-600 text-white font-extrabold p-1 rounded shadow animate-pulse">⚡ ALERTA: Alta Próxima (${diasFaltantes} días)</p>`;
+                }
+              }
+            }
+
+            htmlMonitoreoInfo = `<p class="text-[10px] bg-amber-100 text-amber-900 p-1.5 rounded font-bold mt-1 leading-tight">💉 ${resumenMon}</p>`;
           }
 
           popupContent += `
