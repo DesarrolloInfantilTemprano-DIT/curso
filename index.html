@@ -53,12 +53,12 @@
       border-top-color: rgba(15, 23, 42, 0.9);
     }
     @keyframes pulseGps {
-      0% { transform: scale(0.9); opacity: 0.8; }
-      50% { transform: scale(1.3); opacity: 0.3; }
-      100% { transform: scale(0.9); opacity: 0.8; }
+      0% { transform: scale(0.8); opacity: 0.9; }
+      50% { transform: scale(1.4); opacity: 0.2; }
+      100% { transform: scale(0.8); opacity: 0.9; }
     }
     .gps-pulse-ring {
-      animation: pulseGps 1.8s infinite ease-in-out;
+      animation: pulseGps 1.5s infinite ease-in-out;
     }
   </style>
 </head>
@@ -327,8 +327,8 @@
       <div id="map"></div>
 
       <!-- BOTÓN FLOTANTE MI UBICACIÓN ACTUAL -->
-      <button onclick="centrarEnUbicacionGPS()" title="Centrar en Mi Ubicación GPS" class="absolute bottom-6 right-4 z-20 bg-white hover:bg-slate-100 text-slate-800 p-2.5 rounded-full shadow-2xl border border-slate-300 transition flex items-center justify-center">
-        <i data-lucide="crosshair" class="w-6 h-6 text-blue-600"></i>
+      <button onclick="centrarEnUbicacionGPS(true)" title="Centrar en Mi Ubicación GPS" class="absolute bottom-6 right-4 z-20 bg-white hover:bg-slate-100 text-slate-800 p-2.5 rounded-full shadow-2xl border border-slate-300 transition flex items-center justify-center">
+        <i data-lucide="crosshair" class="w-6 h-6 text-red-600"></i>
       </button>
     </main>
   </div>
@@ -421,13 +421,13 @@
       });
     }
 
-    // ICONO CRUZ EN TIEMPO REAL PARA GPS CON HALO PULSANTE
+    // ICONO CRUZ EN TIEMPO REAL PARA GPS ROJO PULSANTE CON ALTA VISIBILIDAD
     function crearIconoCruzGPS() {
       const svg = `
-        <div style="position:relative; width:32px; height:32px; display:flex; align-items:center; justify-content:center;">
-          <div class="gps-pulse-ring" style="position:absolute; width:28px; height:28px; border-radius:50%; background:rgba(37,99,235,0.35);"></div>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="28" height="28">
-            <circle cx="12" cy="12" r="9" fill="#ffffff" fill-opacity="0.85"/>
+        <div style="position:relative; width:36px; height:36px; display:flex; align-items:center; justify-content:center;">
+          <div class="gps-pulse-ring" style="position:absolute; width:32px; height:32px; border-radius:50%; background:rgba(239, 68, 68, 0.45);"></div>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" width="32" height="32">
+            <circle cx="12" cy="12" r="9" fill="#ffffff" fill-opacity="0.95"/>
             <line x1="12" y1="2" x2="12" y2="22"/>
             <line x1="2" y1="12" x2="22" y2="12"/>
           </svg>
@@ -436,8 +436,8 @@
       return L.divIcon({
         html: svg,
         className: "",
-        iconSize: [32, 32],
-        iconAnchor: [16, 16]
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
       });
     }
 
@@ -572,7 +572,6 @@
       const pestañasMonitoreo = ["Gestante", "AnemiaInfantil", "InaCRED", "InaAnemia", "InaVAC", "HTA", "DM", "PAT"];
       
       for (const hoja of pestañasMonitoreo) {
-        // Intentar recuperar de LocalStorage primero
         const localMon = localStorage.getItem(`SIGIS_MON_${hoja}`);
         if (localMon) {
           baseMonitoreo[hoja] = JSON.parse(localMon);
@@ -581,7 +580,6 @@
 
       aplicarFiltros();
 
-      // Petición progresiva a Google Apps Script para refrescar
       for (const hoja of pestañasMonitoreo) {
         try {
           const response = await fetch(`${URL_MONITOREO}?action=obtenerMonitoreo&hoja=${encodeURIComponent(hoja)}`);
@@ -721,7 +719,7 @@
 
       initModalSectores();
       cargarBaseDatos();
-      iniciarSeguimientoGPSContinuo(); // Activa rastreo GPS continuo con cruz
+      iniciarSeguimientoGPSContinuo();
       cargarMonitoreoInicialCompleto();
     }
 
@@ -817,9 +815,30 @@
       return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
     }
 
-    // SEGUIMIENTO GPS EN TIEMPO REAL CONTINUO
+    // SEGUIMIENTO GPS EN TIEMPO REAL CON CENTRADO DIRECTO CERCANO
     function iniciarSeguimientoGPSContinuo() {
-      if (!navigator.geolocation) return;
+      if (!navigator.geolocation) {
+        alert("Geolocalización no soportada por el navegador.");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(pos => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        userCurrentCoords = [lat, lng];
+
+        if (!userGpsMarker) {
+          userGpsMarker = L.marker([lat, lng], {
+            icon: crearIconoCruzGPS(),
+            zIndexOffset: 3000
+          }).addTo(map).bindPopup("<b>📍 Tu Ubicación Actual</b>");
+        } else {
+          userGpsMarker.setLatLng([lat, lng]);
+        }
+
+        // Posicionar el mapa directamente donde está el usuario con Zoom de detalle (17)
+        map.setView([lat, lng], 17);
+      }, err => console.log("GPS inicial:", err.message), { enableHighAccuracy: true });
 
       navigator.geolocation.watchPosition(position => {
         const lat = position.coords.latitude;
@@ -831,24 +850,40 @@
         } else {
           userGpsMarker = L.marker([lat, lng], {
             icon: crearIconoCruzGPS(),
-            zIndexOffset: 2000
-          }).addTo(map).bindPopup("<b>📍 Tu Ubicación Actual (En movimiento)</b>");
+            zIndexOffset: 3000
+          }).addTo(map).bindPopup("<b>📍 Tu Ubicación Actual</b>");
         }
       }, err => {
-        console.log("Aviso GPS:", err.message);
+        console.log("GPS Watch:", err.message);
       }, {
         enableHighAccuracy: true,
-        maximumAge: 5000,
+        maximumAge: 3000,
         timeout: 10000
       });
     }
 
-    function centrarEnUbicacionGPS() {
+    function centrarEnUbicacionGPS(mostrarMensaje = false) {
       if (userCurrentCoords) {
         map.setView(userCurrentCoords, 17);
         if (userGpsMarker) userGpsMarker.openPopup();
       } else {
-        alert("Obteniendo señal GPS... Asegúrate de permitir el acceso a la ubicación.");
+        navigator.geolocation.getCurrentPosition(pos => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          userCurrentCoords = [lat, lng];
+          map.setView([lat, lng], 17);
+          if (userGpsMarker) {
+            userGpsMarker.setLatLng([lat, lng]);
+          } else {
+            userGpsMarker = L.marker([lat, lng], {
+              icon: crearIconoCruzGPS(),
+              zIndexOffset: 3000
+            }).addTo(map).bindPopup("<b>📍 Tu Ubicación Actual</b>");
+          }
+          userGpsMarker.openPopup();
+        }, err => {
+          alert("Asegúrate de permitir el acceso a la ubicación GPS en la barra del navegador.");
+        }, { enableHighAccuracy: true });
       }
     }
 
@@ -889,7 +924,6 @@
       return mzStr.toString().toLowerCase().replace(/mz|\.|\s/g, '').trim();
     }
 
-    // OBTENER RESUMEN COMPLETO DE MONITOREO DE UNA PERSONA
     function obtenerResumenMonitoreoPersona(dniStr) {
       if (!dniStr) return "";
       let hallazgos = [];
@@ -910,7 +944,6 @@
       return hallazgos.join(" | ");
     }
 
-    // EXPORTAR A EXCEL DIRECTO (.XLSX) USANDO SHEETJS
     function exportarExcelDirecto() {
       if (!ultimosFiltradosGlobal || ultimosFiltradosGlobal.length === 0) {
         alert("No hay registros filtrados para exportar.");
@@ -952,7 +985,6 @@
       XLSX.writeFile(workbook, `SIGIS_FED_Monitoreo_${new Date().toISOString().slice(0,10)}.xlsx`);
     }
 
-    // Filtrar y Renderizar los marcadores
     function aplicarFiltros() {
       const ffamiliar = document.getElementById('f_ffamiliar').value.trim().toLowerCase();
       
@@ -970,7 +1002,6 @@
       const dateDesde = fnDesdeStr ? new Date(fnDesdeStr) : null;
       const dateHasta = fnHastaStr ? new Date(fnHastaStr) : null;
 
-      // Filtros de Monitoreo
       const tipoMon = document.getElementById('f_tipo_monitoreo').value;
       const nombreVacuna = document.getElementById('f_nombre_vacuna').value.trim().toLowerCase();
       const monDesdeStr = document.getElementById('f_mon_desde').value;
@@ -1016,7 +1047,7 @@
         if (arrayMzInput.length > 0) {
           const itemMz = normalizarMz(item.mz);
           const coincideMz = arrayMzInput.some(m => itemMz === m);
-          if (!coincideSector) return false;
+          if (!coincideMz) return false;
         }
 
         if (dni && (!item.dni || !item.dni.toString().toLowerCase().includes(dni))) return false;
@@ -1250,7 +1281,8 @@
 
       document.getElementById('badgeConteo').textContent = `${filtrados.length} Persona(s) (${bounds.length} Puntos)`;
 
-      if (bounds.length > 0) {
+      // Ajustar la cámara global solo si no hay ubicación de usuario detectada
+      if (bounds.length > 0 && !userCurrentCoords) {
         map.fitBounds(bounds, { padding: [50, 50], maxZoom: 17 });
       }
     }
